@@ -1,0 +1,97 @@
+from __future__ import annotations
+
+from typing import Dict, Set
+
+from ._operations import default_operations
+from .types import (
+    OperationT,
+    TagFormulaT,
+    TagResolverContextT,
+    TagSpecsT,
+    TagValueStoreT,
+    TagValueT,
+)
+
+
+class TagResolver:
+    """
+    Usage:
+    >>> from cognite_synthetic_tags import Tag
+    >>> specs = {
+    ...     "value_1": Tag("A1"),
+    ...     "value_2": Tag("A1") + Tag("B2") * Tag("B3"),
+    ... }
+    >>> TagResolver(dummy_value_store).resolve(specs)
+    {'value_1': 11, 'value_2': 737}
+    >>> len(dummy_value_store.calls)
+    3
+
+    >>> dummy_value_store.calls = []
+    >>> specs = {
+    ...     "value_1": Tag("A1") * 2,
+    ...     "value_2": Tag("A1") * 3 + Tag("B2") * 1000 * Tag("B3"),
+    ...     "value_3": Tag("B2"),
+    ... }
+    >>> TagResolver(dummy_value_store).resolve(specs)
+    {'value_1': 22, 'value_2': 726033, 'value_3': 22}
+    >>> len(dummy_value_store.calls)
+    3
+    """
+
+    def __init__(self, value_store: TagValueStoreT, additional_operations=None):
+        self.context: TagResolverContextT = {}
+        self.value_store = value_store
+        self.operations = default_operations.copy()
+        self.operations.update(additional_operations or {})
+        self._real_tags: Set[str] = set()
+
+    def resolve(self, specs: TagSpecsT) -> Dict[str, TagValueT]:
+        self._real_tags = set()
+        for key, tag in specs.items():
+            if tag.formula:
+                self._real_tags.update(
+                    self._collect_tags_from_formula(tag.formula),
+                )
+            else:
+                self._real_tags.add(tag.name)
+        self.context.update(
+            self.value_store(self._real_tags),
+        )
+        result = {}
+        for key, tag in specs.items():
+
+            if tag.name in self.context:
+                result[key] = self.context[tag.name]
+            else:
+                assert tag.formula is not None
+                result[key] = self._resolve_formula(tag.formula)
+        return result
+
+    def _collect_tags_from_formula(self, formula: TagFormulaT) -> Set[str]:
+        tags = set()
+        for item in formula[1]:
+            if hasattr(item, "formula"):
+                if item.formula:
+                    tags.update(self._collect_tags_from_formula(item.formula))
+                else:
+                    tags.add(item.name)
+        operator_ = formula[0]
+        assert operator_ in self.operations, f"Unknown operator: {operator_}"
+        return tags
+
+    def _resolve_formula(self, formula: TagFormulaT) -> TagValueT:
+        values = []
+        for item in formula[1]:
+            if hasattr(item, "formula"):
+                if item.formula:
+                    values.append(self._resolve_formula(item.formula))
+                else:
+                    values.append(self.context[item.name])
+            else:
+                # literal, for example when multiplying with an integer
+                values.append(item)
+        operator_ = formula[0]
+        assert operator_ in self.operations, f"Unknown operator: {operator_}"
+        operation: OperationT = self.operations[operator_]
+        result = operation(*values)
+        return result
