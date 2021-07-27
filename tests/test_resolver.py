@@ -239,3 +239,115 @@ def test_call_custom_operation(value_store):
         "value_2": 22,
     }
     assert value == expected
+
+
+def test_recursive_spec(value_store):
+    specs = {
+        "value_1": Tag("A1") + Tag("B2"),
+        "value_2": Tag("value_1") * 10,
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "value_1": 3,
+        "value_2": 30,
+    }
+    assert value == expected
+
+
+def test_recursive_spec_repeated(value_store):
+    specs = {
+        "value_1": Tag("A1") + Tag("B2"),
+        "value_2": Tag("value_1") * 10,
+        "value_3": Tag("value_1") * 11,
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "value_1": 3,
+        "value_2": 30,
+        "value_3": 33,
+    }
+    assert value == expected
+
+
+def test_recursive_spec_repeated_deep(value_store):
+    specs = {
+        "value_1": Tag("A1") + Tag("B2"),
+        "value_2": Tag("value_1") * 10,
+        "value_3": Tag("C4") * 10,
+        "value_4": Tag("value_2") + Tag("value_3"),
+        "value_5": Tag("value_4") + Tag("value_1"),
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "value_1": 3,
+        "value_2": 30,
+        "value_3": 40,
+        "value_4": 70,
+        "value_5": 73,
+    }
+    assert value == expected
+
+
+def test_recursive_cyclic(value_store):
+    specs = {
+        "value_1": Tag("A1") + Tag("value_2"),
+        "value_2": Tag("value_1") * 10,
+    }
+
+    try:
+        TagResolver(value_store).resolve(specs)
+    except ValueError as exc:
+        assert "Cyclic definition of tags with" in exc.args[0]
+    else:
+        assert False, "Exception not raised"
+
+
+def test_recursive_cyclic_deep(value_store):
+    specs = {
+        "value_1": Tag("A1") + Tag("value_3"),
+        "value_2": Tag("value_1") + 1,
+        "value_3": Tag("value_2") * 10,
+    }
+
+    try:
+        TagResolver(value_store).resolve(specs)
+    except ValueError as exc:
+        assert "Cyclic definition of tags with" in exc.args[0]
+    else:
+        assert False, "Exception not raised"
+
+
+def test_recursive_same_name(value_store):
+    specs = {
+        "A1": Tag("A1"),
+        "A2": Tag("A2"),
+        "total": Tag("A1") + Tag("A2"),
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "A1": 1,
+        "A2": 2,
+        "total": 3,
+    }
+    assert value == expected
+
+
+def test_recursive_same_name_reassigned(value_store):
+    specs = {
+        "A1": Tag("A1") * 10,
+    }
+
+    try:
+        TagResolver(value_store).resolve(specs)
+    except ValueError as exc:
+        assert "Cyclic definition of tags" in exc.args[0]
+    else:
+        assert False, "Exception not raised"

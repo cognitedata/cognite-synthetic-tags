@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, Set
+from typing import Dict, Set, List
 
+from . import Tag
 from ._operations import default_operations
 from .types import (
     OperationT,
@@ -44,13 +45,16 @@ class TagResolver:
         self.operations = default_operations.copy()
         self.operations.update(additional_operations or {})
         self._real_tags: Set[str] = set()
+        self._recursive_tags: List[Set[str]] = [set()]
+        self._specs: TagSpecsT = {}
 
     def resolve(self, specs: TagSpecsT) -> Dict[str, TagValueT]:
+        self._specs = specs
         self._real_tags = set()
         for key, tag in specs.items():
             if tag.formula:
                 self._real_tags.update(
-                    self._collect_tags_from_formula(tag.formula),
+                    self._collect_tags_from_formula(key, tag.formula),
                 )
             else:
                 self._real_tags.add(tag.name)
@@ -67,17 +71,28 @@ class TagResolver:
                 result[key] = self._resolve_formula(tag.formula)
         return result
 
-    def _collect_tags_from_formula(self, formula: TagFormulaT) -> Set[str]:
+    def _collect_tags_from_formula(self, key: str, formula: TagFormulaT) -> Set[str]:
         tags = set()
         for item in formula[1]:
+            self._recursive_tags += [self._recursive_tags[-1].copy()]
             if hasattr(item, "formula"):
+                item = self._handle_recursive_tags(key, item)
                 if item.formula:
-                    tags.update(self._collect_tags_from_formula(item.formula))
+                    tags.update(self._collect_tags_from_formula(key, item.formula))
                 else:
                     tags.add(item.name)
+            self._recursive_tags.pop()
         operator_ = formula[0]
         assert operator_ in self.operations, f"Unknown operator: {operator_}"
         return tags
+
+    def _handle_recursive_tags(self, key: str, tag: Tag) -> Tag:
+        if tag.name in self._specs:
+            if tag.name in self._recursive_tags[-1]:
+                raise ValueError(f"Cyclic definition of tags with: {tag.name} in {tag.formula}")
+            self._recursive_tags[-1].add(tag.name)
+            tag.formula = self._specs[tag.name].formula
+        return tag
 
     def _resolve_formula(self, formula: TagFormulaT) -> TagValueT:
         values = []
