@@ -14,6 +14,9 @@ class Tag:
     def __str__(self) -> str:
         return self.name
 
+    def __repr__(self):
+        return self.__str__()
+
     def calc(self, operator_: str, *args: Any) -> Tag:
         return Tag.call(operator_, self, *args)
 
