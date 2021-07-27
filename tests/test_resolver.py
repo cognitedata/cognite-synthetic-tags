@@ -1,4 +1,3 @@
-import hashlib
 import math
 
 from cognite_synthetic_tags import Tag, TagResolver
@@ -209,18 +208,18 @@ def test_calc(value_store):
 def test_calc_custom_operation(value_store):
     specs = {
         "value_1": Tag("A2").calc("foobar", 40),
-        "value_2": Tag("A2").calc("md5"),
+        "value_2": Tag("A2").calc("is_even"),
     }
     additional_operations = {
         "foobar": lambda a, b: str(a + b) * 3,
-        "md5": lambda a: hashlib.md5(str(a).encode()).hexdigest(),
+        "is_even": lambda a: a % 2 == 0,
     }
 
     value = TagResolver(value_store, additional_operations).resolve(specs)
 
     expected = {
         "value_1": "424242",
-        "value_2": "c81e728d9d4c2f636f067f89cc14862c",
+        "value_2": True,
     }
     assert value == expected
 

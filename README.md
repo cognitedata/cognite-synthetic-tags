@@ -269,7 +269,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 ...     "pressure_md5": Tag(METER_B).calc("md5"),
 ... }
 >>> tag_resolver.resolve(specs)
-{'pressure': 4.15, 'pressure_md5': '7fd3cdaaba74a0b0ef3d707a8545df7c'}
+{'pressure': 4.15, 'pressure_md5': '7fd3...'}
 ```
 
 
