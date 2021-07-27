@@ -139,10 +139,10 @@ For now, this library works only for retrieving single values from CDF. As such 
  * most recent values from time series
  * most recent aggregated values from time series.
 
-It does not support retrieving multiple time series.
+It does not support retrieving multiple data points.
 
-In principle, there is no reason why we couldn't use the same approach to fetch (and perform math and other operations)
-on time series. It just has not been implemented yet.
+In principle, there is no reason why we couldn't use the same approach to fetch (and perform math and other 
+operations on) multiple results per tag (probably using pandas `Series`). It just has not been implemented yet.
 
 
 ### Single data storage
@@ -177,14 +177,15 @@ Note: This limitation only applies to a single `TagResolver.resolve` call. There
 
 CDF API supports
 [Synthetic Time Series](https://docs.cognite.com/dev/concepts/resource_types/synthetic_timeseries.html). This library
-provides similar functionality and there is a significant overlap (e.g. both can apply trigonometric functions on CDF).
+provides similar functionality and there is a significant overlap (e.g. both can apply trigonometric functions on 
+CDF values).
 
 The main difference is that Synthetic Time Series performs calculations on the server, whereas this library fetches
 only basic data from the API and performs the calculations locally.
 
-Performing the calculations serverside means less code and opportunity for bugs.
+Performing the calculations serverside means less code and fewer opportunities for bugs.
 
-Performing them locally means more control and extendability.
+Performing the calculations locally means more control and extendability.
 
 In principle some support for the Synthetic Time Series API could be added to this library. TDB.
 
