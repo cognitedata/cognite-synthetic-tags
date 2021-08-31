@@ -33,5 +33,9 @@ pytest-mock = "^3.6.1"
 coverage = {extras = ["toml"], version = "^5.5"}
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = [
+    "poetry-core>=1.0.0",
+    "setuptools>30,<50.0",  # https://github.com/pypa/setuptools/issues/2353
+    "wheel",
+]
 build-backend = "poetry.core.masonry.api"
