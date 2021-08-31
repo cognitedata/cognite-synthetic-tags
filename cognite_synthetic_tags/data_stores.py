@@ -49,9 +49,7 @@ def retrieve_datapoints_df(
 
     assert ignore_unknown_ids  # otherwise c.datapoints.retrieve would raise
     # Add any missing columns
-    for column in columns:
-        if column not in df:
-            df[column] = fill_with
+    df.loc[:, [c for c in columns if c not in df.columns]] = fill_with
 
     # Reorder columns:
     df = df[columns]
