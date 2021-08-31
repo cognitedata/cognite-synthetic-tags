@@ -53,7 +53,7 @@ def retrieve_datapoints_df(
 
     # Reorder columns:
     df = df[columns]
-    return df
+    return df.copy()
 
 
 def latest_datapoint(
