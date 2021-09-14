@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, cast
+
+import pandas as pd
 
 from . import Tag
 from ._operations import default_operations
@@ -114,7 +116,7 @@ class TagResolver:
         return tag
 
     def _resolve_formula(self, formula: TagFormulaT) -> TagValueT:
-        values = []
+        values: List[TagValueT] = []
         for item in formula[1]:
             if hasattr(item, "formula"):
                 if item.formula:
@@ -123,16 +125,43 @@ class TagResolver:
                     values.append(self.context[item.name])
             else:
                 # literal, for example when multiplying with an integer
-                values.append(item)
+                values.append(cast(TagValueT, item))
         operator_ = formula[0]
         assert operator_ in self.operations, f"Unknown operator: {operator_}"
         operation: OperationT = self.operations[operator_]
-        result = operation(*values)
+
+        # If any pd.Series instance, apply the operation element-wise
+        series: List[pd.Series] = list(
+            filter(lambda val: isinstance(val, pd.Series), values)
+        )
+        if series:
+            index = series[0].index
+            # check that all series have the same indexes:
+            # (all are returned from the same CDF API call, so they should)
+            for single_series in series:
+                assert all(
+                    single_series.index == index
+                ), "Series need to have the same index."
+            # convert any non-series items to series:
+            # (repeat the item for every index)
+            all_series: List[pd.Series] = [
+                value
+                if isinstance(value, pd.Series)
+                else pd.Series([value] * len(index), index=index)
+                for value in values
+            ]
+            # apply the operation, element-wise, and make a new pd.Series:
+            result = pd.Series(
+                operation(*[single_series[i] for single_series in all_series])
+                for i in index
+            )
+        else:
+            result = operation(*values)
         return result
 
     def _extract_literals_from_specs(
-            self,
-            specs: TagSpecsT,
+        self,
+        specs: TagSpecsT,
     ) -> Tuple[TagSpecsT, TagResolverContextT]:
         literals: TagResolverContextT = {}
         for key, value in specs.items():

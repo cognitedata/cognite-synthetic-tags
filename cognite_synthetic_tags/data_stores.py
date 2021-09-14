@@ -1,10 +1,10 @@
-from typing import Any, List, Literal, Optional, Set
+from typing import Any, Dict, List, Literal, Optional, Set
 
 import numpy as np
 import pandas as pd
 from cognite.client import CogniteClient
 
-from cognite_synthetic_tags.types import CogniteTimeT
+from cognite_synthetic_tags.types import CogniteTimeT, RetrievalFuncT, TagValueT
 
 DEFAULT_LIMIT = 10
 
@@ -47,7 +47,6 @@ def retrieve_datapoints_df(
         else [f"{tag}|{aggregate}" for tag in tags for aggregate in aggregates]
     )
 
-    assert ignore_unknown_ids  # otherwise c.datapoints.retrieve would raise
     # Add any missing columns
     df.loc[:, [c for c in columns if c not in df.columns]] = fill_with
 
@@ -68,8 +67,8 @@ def latest_datapoint(
     ignore_unknown_ids: bool = True,
     ffill: bool = True,
     fillna: Any = None,
-):
-    def _retrieve(tags: Set[str]):
+) -> RetrievalFuncT:
+    def _retrieve(tags: Set[str]) -> Dict[str, TagValueT]:
         df = retrieve_datapoints_df(
             client,
             **{query_by: list(tags)},  # type: ignore
@@ -93,6 +92,40 @@ def latest_datapoint(
                 col.replace(f"|{aggregate}", "") for col in df.columns
             ]
         resolved = df.iloc[-1, :].to_dict()
+        return resolved
+
+    return _retrieve
+
+
+def series(
+    client: CogniteClient,
+    start: CogniteTimeT,
+    end: CogniteTimeT,
+    include_outside_points: bool = None,
+    limit: int = DEFAULT_LIMIT,
+    query_by: Literal["id", "external_id"] = "id",
+    ignore_unknown_ids: bool = True,
+    ffill: bool = True,
+    fillna: Any = None,
+) -> RetrievalFuncT:
+    def _retrieve(tags: Set[str]) -> Dict[str, TagValueT]:
+        df = retrieve_datapoints_df(
+            client,
+            **{query_by: list(tags)},  # type: ignore
+            start=start,
+            end=end,
+            include_outside_points=include_outside_points,
+            ignore_unknown_ids=ignore_unknown_ids,
+            limit=limit,
+        )
+        if df.empty:
+            df[start] = [np.nan] * len(df.columns)
+        if ffill:
+            df = df.ffill()
+        if fillna is not None:
+            df = df.fillna(fillna)
+            # (BTW, Pandas doesn't support df.fillna(None) ¯\_(ツ)_/¯ )
+        resolved = {col: df[col] for col in df.columns}
         return resolved
 
     return _retrieve
