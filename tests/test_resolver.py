@@ -350,3 +350,31 @@ def test_recursive_same_name_reassigned(value_store):
         assert "Cyclic definition of tags" in exc.args[0]
     else:
         assert False, "Exception not raised"
+
+
+def test_literal_value(value_store):
+    specs = {
+        "A2": 2,
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "A2": 2,
+    }
+    assert value == expected
+
+
+def test_literal_value_used_in_formula(value_store):
+    specs = {
+        "A2": 2,
+        "A3": Tag("A2") * 3,
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "A2": 2,
+        "A3": 6,
+    }
+    assert value == expected

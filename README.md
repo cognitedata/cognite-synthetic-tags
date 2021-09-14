@@ -141,7 +141,7 @@ For now, this library works only for retrieving single values from CDF. As such 
 
 It does not support retrieving multiple data points.
 
-In principle, there is no reason why we couldn't use the same approach to fetch (and perform math and other 
+In principle, there is no reason why we couldn't use the same approach to fetch (and perform math and other
 operations on) multiple results per tag (probably using pandas `Series`). It just has not been implemented yet.
 
 
@@ -177,7 +177,7 @@ Note: This limitation only applies to a single `TagResolver.resolve` call. There
 
 CDF API supports
 [Synthetic Time Series](https://docs.cognite.com/dev/concepts/resource_types/synthetic_timeseries.html). This library
-provides similar functionality and there is a significant overlap (e.g. both can apply trigonometric functions on 
+provides similar functionality and there is a significant overlap (e.g. both can apply trigonometric functions on
 CDF values).
 
 The main difference is that Synthetic Time Series performs calculations on the server, whereas this library fetches

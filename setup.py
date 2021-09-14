@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import os
-from setuptools import setup
-from setuptools import find_packages
+
+from setuptools import find_packages, setup
 
 
 def read(filename):
@@ -11,13 +11,13 @@ def read(filename):
         return file.read()
 
 
-version = '0.1.0-beta'
-if '-dev' in version:
-    dev_status = 'Development Status :: 3 - Alpha'
-elif '-beta' in version:
-    dev_status = 'Development Status :: 4 - Beta'
+version = "0.1.0-beta"
+if "-dev" in version:
+    dev_status = "Development Status :: 3 - Alpha"
+elif "-beta" in version:
+    dev_status = "Development Status :: 4 - Beta"
 else:
-    dev_status = 'Development Status :: 5 - Production/Stable'
+    dev_status = "Development Status :: 5 - Production/Stable"
 
 
 setup(
