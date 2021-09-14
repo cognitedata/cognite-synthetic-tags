@@ -1,5 +1,7 @@
 import math
 
+import pandas as pd
+
 from cognite_synthetic_tags import Tag, TagResolver
 
 from ._utils import *  # noqa
@@ -378,3 +380,74 @@ def test_literal_value_used_in_formula(value_store):
         "A3": 6,
     }
     assert value == expected
+
+
+def test_series_math(series_value_store):
+    specs = {
+        "A3": Tag("A98") + 1,
+        "A4": 2 * Tag("A10"),
+    }
+
+    value = TagResolver(series_value_store).resolve(specs)
+
+    expected = {
+        "A3": pd.Series([99, 100, 1, 2, 3, 4, 5]),
+        "A4": pd.Series([20, 22, 24, 26, 28, 30, 32]),
+    }
+    assert expected.keys() == value.keys() and all(
+        all(value[key] == expected[key]) for key in expected
+    )
+
+
+def test_series_math_two_series(series_value_store):
+    specs = {
+        "A3": Tag("A98") + Tag("A0"),
+    }
+
+    value = TagResolver(series_value_store).resolve(specs)
+
+    expected = {
+        "A3": pd.Series([98, 100, 2, 4, 6, 8, 10]),
+    }
+    assert expected.keys() == value.keys() and all(
+        all(value[key] == expected[key]) for key in expected
+    )
+
+
+def test_series_math_stuff(series_value_store):
+    specs = {
+        "A3_combined": Tag("A98") - Tag("A0"),
+        "A20_tenfold": 10 * Tag("A20"),
+        "A30_even": Tag("A30").calc("is_even"),
+    }
+    additional_operations = {
+        "is_even": lambda a: a % 2 == 0,
+    }
+
+    value = TagResolver(series_value_store, additional_operations).resolve(
+        specs
+    )
+
+    expected = {
+        "A3_combined": pd.Series([98, 98, -2, -2, -2, -2, -2]),
+        "A20_tenfold": pd.Series([200, 210, 220, 230, 240, 250, 260]),
+        "A30_even": pd.Series([True, False, True, False, True, False, True]),
+    }
+    assert expected.keys() == value.keys() and all(
+        all(value[key] == expected[key]) for key in expected
+    )
+
+
+def test_series_trig(series_value_store):
+    specs = {
+        "sin_of_A0": Tag.sin(Tag("A0")),
+    }
+
+    value = TagResolver(series_value_store).resolve(specs)
+
+    expected = {
+        "sin_of_A0": pd.Series([math.sin(i) for i in range(7)]),
+    }
+    assert expected.keys() == value.keys() and all(
+        all(value[key] == expected[key]) for key in expected
+    )
