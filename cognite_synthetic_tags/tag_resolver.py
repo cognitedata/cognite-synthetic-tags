@@ -82,14 +82,18 @@ class TagResolver:
 
         return result
 
-    def _collect_tags_from_formula(self, key: str, formula: TagFormulaT) -> Set[str]:
+    def _collect_tags_from_formula(
+        self, key: str, formula: TagFormulaT
+    ) -> Set[str]:
         tags = set()
         for item in formula[1]:
             self._recursive_tags += [self._recursive_tags[-1].copy()]
             if hasattr(item, "formula"):
                 item = self._handle_recursive_tags(key, item)
                 if item.formula:
-                    tags.update(self._collect_tags_from_formula(key, item.formula))
+                    tags.update(
+                        self._collect_tags_from_formula(key, item.formula)
+                    )
                 else:
                     tags.add(item.name)
             self._recursive_tags.pop()
@@ -100,9 +104,13 @@ class TagResolver:
     def _handle_recursive_tags(self, key: str, tag: Tag) -> Tag:
         if tag.name in self._specs:
             if tag.name in self._recursive_tags[-1]:
-                raise ValueError(f"Cyclic definition of tags with: {tag.name} in {tag.formula}")
+                raise ValueError(
+                    f"Cyclic definition of tags with:"
+                    f" {tag.name} in {tag.formula}"
+                )
             self._recursive_tags[-1].add(tag.name)
-            tag.formula = self._specs[tag.name].formula
+            item = self._specs[tag.name]
+            tag.formula = getattr(item, "formula", item)
         return tag
 
     def _resolve_formula(self, formula: TagFormulaT) -> TagValueT:
@@ -122,11 +130,16 @@ class TagResolver:
         result = operation(*values)
         return result
 
-    def _extract_literals_from_specs(self, specs: TagSpecsT) -> Tuple[TagSpecsT, TagResolverContextT]:
+    def _extract_literals_from_specs(
+            self,
+            specs: TagSpecsT,
+    ) -> Tuple[TagSpecsT, TagResolverContextT]:
         literals: TagResolverContextT = {}
         for key, value in specs.items():
             if not isinstance(value, Tag):
                 literals[key] = value
         self.context.update(literals)
-        new_specs = {key: value for key, value in specs.items() if key not in literals}
+        new_specs = {
+            key: value for key, value in specs.items() if key not in literals
+        }
         return new_specs, literals
