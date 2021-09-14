@@ -45,13 +45,13 @@ and math operations are performed.
 ``` python
 >>> specs = {
 ...     "some_valve": Tag("FOO.123"),
-...     "another_metetr": Tag("BAR.456"),
-...     "sum_of_2_things": Tag("THING.A") + Tag("THING.B"),
+...     "another_meter": Tag("BAR-456"),
+...     "sum_of_2_things": Tag("THING_A") + Tag("THING_B"),
 ... }
 >>> TagResolver(retrival_function).resolve(specs)
 {
     "some_valve": 42.0000123,
-    "another_metetr": 42000.456000,
+    "another_meter": 42000.456000,
     "sum_of_2_things": 78.9,
 }
 ```
@@ -78,6 +78,7 @@ It is also possible to use functions that take multiple values:
 
 ``` python
 >>> def closest_to_42(*vals):
+...     """Return whichever value in `vals` is closest to 42"""
 ...     deltas = [abs(42 - val) for val in vals]
 ...     return vals[deltas.index(min(deltas))]
 
@@ -128,16 +129,20 @@ In the next example, the CDF time series API endpoint is hit only once with a qu
 {"value_1": 23, "value_1_percent": 33,3333333333}
 ```
 
-To avoid having values cached like this, use a new instance of `TagResolver` for each query.
+#### Avoiding Cache
+
+In case that the caching is not desired (i.e. if we wanted to query the CDF again in each of the three examples above)
+we should create a new instance of `TagResolver` for each example (i.e. use `TagResolver(retrival_function).resolve`
+instead of `resolver.resolve`).
 
 
 ## Limitations
 
-### Single-value lookups
+### Single-value Lookups
 
 For now, this library works only for retrieving single values from CDF. As such it can be used as-is to fetch:
  * most recent values from time series
- * most recent aggregated values from time series.
+ * aggregated values from time series.
 
 It does not support retrieving multiple data points.
 
@@ -145,7 +150,7 @@ In principle, there is no reason why we couldn't use the same approach to fetch 
 operations on) multiple results per tag (probably using pandas `Series`). It just has not been implemented yet.
 
 
-### Single data storage
+### Single Data Store
 
 For now `TagResolver` class supports a single callable that it uses to fetch the values. This means that we can use it
 to (for example) fetch average values or max values, but we cannot "mix and match". In other words, it is not possible
@@ -180,8 +185,11 @@ CDF API supports
 provides similar functionality and there is a significant overlap (e.g. both can apply trigonometric functions on
 CDF values).
 
-The main difference is that Synthetic Time Series performs calculations on the server, whereas this library fetches
-only basic data from the API and performs the calculations locally.
+The main difference is that Synthetic Time Series performs calculations on the server, whereas **Synthetic Tags**
+fetches only basic data from the API and performs the calculations locally.
+
+Also, **Synthetic Tags** currently only supports fetching single values per timeseries, until the support for
+Pandas Series is added, see (Single-value Lookups)[#single-value-lookups] above.
 
 Performing the calculations serverside means less code and fewer opportunities for bugs.
 
