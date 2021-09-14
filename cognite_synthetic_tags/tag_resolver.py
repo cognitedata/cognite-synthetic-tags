@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Set, List
+from typing import Dict, List, Set, Tuple
 
 from . import Tag
 from ._operations import default_operations
@@ -49,6 +49,10 @@ class TagResolver:
         self._specs: TagSpecsT = {}
 
     def resolve(self, specs: TagSpecsT) -> Dict[str, TagValueT]:
+        # extract any literal values from the specs:
+        specs, literals = self._extract_literals_from_specs(specs)
+
+        # find all the actual CDF tags from the specs, recursively:
         self._specs = specs
         self._real_tags = set()
         for key, tag in specs.items():
@@ -58,17 +62,24 @@ class TagResolver:
                 )
             else:
                 self._real_tags.add(tag.name)
+
+        # fetch all the data from CDF:
         self.context.update(
             self.value_store(self._real_tags),
         )
+
+        # perform calculations according to tag specs
         result = {}
         for key, tag in specs.items():
-
             if tag.name in self.context:
                 result[key] = self.context[tag.name]
             else:
                 assert tag.formula is not None
                 result[key] = self._resolve_formula(tag.formula)
+
+        # add the literal values back into the result:
+        result.update(literals)
+
         return result
 
     def _collect_tags_from_formula(self, key: str, formula: TagFormulaT) -> Set[str]:
@@ -110,3 +121,12 @@ class TagResolver:
         operation: OperationT = self.operations[operator_]
         result = operation(*values)
         return result
+
+    def _extract_literals_from_specs(self, specs: TagSpecsT) -> Tuple[TagSpecsT, TagResolverContextT]:
+        literals: TagResolverContextT = {}
+        for key, value in specs.items():
+            if not isinstance(value, Tag):
+                literals[key] = value
+        self.context.update(literals)
+        new_specs = {key: value for key, value in specs.items() if key not in literals}
+        return new_specs, literals
