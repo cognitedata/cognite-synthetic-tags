@@ -451,3 +451,23 @@ def test_series_trig(series_value_store):
     assert expected.keys() == value.keys() and all(
         all(value[key] == expected[key]) for key in expected
     )
+
+
+def test_series_index_and_literals(series_value_store):
+    specs = {
+        "lit": 100,
+        "calc": Tag("lit") * Tag("A1"),
+    }
+
+    value = TagResolver(series_value_store).resolve(specs)
+
+    expected = {
+        "lit": pd.Series([100 for _ in range(7)]),
+        "calc": pd.Series([100 * (i + 1) for i in range(7)]),
+    }
+    assert expected.keys() == value.keys() and all(
+        all(value[key] == expected[key]) for key in expected
+    )
+
+    assert all(value["lit"].index == value["calc"].index)
+    assert len(value["lit"].index) == 7
