@@ -129,6 +129,14 @@ In the next example, the CDF time series API endpoint is hit only once with a qu
 {"value_1": 23, "value_1_percent": 33,3333333333}
 ```
 
+### Multi-value Lookups (Series)
+
+While the primary motivation for **Synthetic Tags** library was to facilitate single-value lookups, as seen in the 
+examples above, the library also supports retrieval of multiple datapoints (as `pd.Series`) as well as performing
+element-wise operations on them.
+
+
+
 #### Avoiding Cache
 
 In case that the caching is not desired (i.e. if we wanted to query the CDF again in each of the three examples above)
@@ -138,17 +146,8 @@ instead of `resolver.resolve`).
 
 ## Limitations
 
-### Single-value Lookups
-
-For now, this library works only for retrieving single values from CDF. As such it can be used as-is to fetch:
- * most recent values from time series
- * aggregated values from time series.
-
-It does not support retrieving multiple data points.
-
-In principle, there is no reason why we couldn't use the same approach to fetch (and perform math and other
-operations on) multiple results per tag (probably using pandas `Series`). It just has not been implemented yet.
-
+* ~~single-value lookups~~  (implemented)
+* single data store
 
 ### Single Data Store
 
@@ -188,9 +187,6 @@ CDF values).
 The main difference is that Synthetic Time Series performs calculations on the server, whereas **Synthetic Tags**
 fetches only basic data from the API and performs the calculations locally.
 
-Also, **Synthetic Tags** currently only supports fetching single values per timeseries, until the support for
-Pandas Series is added, see (Single-value Lookups)[#single-value-lookups] above.
-
 Performing the calculations serverside means less code and fewer opportunities for bugs.
 
 Performing the calculations locally means more control and extendability.
@@ -215,13 +211,13 @@ Get your API key from https://openindustrialdata.com/get-started/
 
 
 ``` python
->>> from cognite_synthetic_tags import latest_datapoint, Tag, TagResolver
+>>> from cognite_synthetic_tags import latest_datapoint, series, Tag, TagResolver
 >>> from cognite.client import CogniteClient
 
 >>> # CONFIGURE FETCHING PARAMS:
 
 >>> client = CogniteClient()
->>> def retrival_call(tags):
+>>> def get_latest(tags):
 ...     return latest_datapoint(
 ...         client,
 ...         query_by="external_id",
@@ -229,7 +225,20 @@ Get your API key from https://openindustrialdata.com/get-started/
 ...         end="89d-ago",
 ...         # agregate="average",  # if we wanted to use an agregate
 ...     )(tags)
->>> tag_resolver = TagResolver(retrival_call)
+
+>>> def get_series(tags):
+...     return series(
+...         client,
+...         query_by="external_id",
+...         start="90d-ago",
+...         end="89d-ago",
+...     )(tags)
+
+>>> # just for readability:
+>>> VALVE_22 = "houston.ro.REMOTE_AI[22]"
+>>> METER_A = "houston.ro.REMOTE_AI[3]"  
+>>> METER_B = "houston.ro.REMOTE_AI[4]"
+>>> METER_C = "houston.ro.REMOTE_AI[5]"
 ```
 
 #### Simple Usage
@@ -237,19 +246,18 @@ Get your API key from https://openindustrialdata.com/get-started/
 ``` python
 
 >>> # single value (not very useful):
->>> specs = {"valve": Tag("houston.ro.REMOTE_AI[22]")}
+>>> tag_resolver = TagResolver(get_latest)
+>>> specs = {"valve": Tag(VALVE_22)}
 >>> tag_resolver.resolve(specs)
 {'valve': 0.003925000131130218}
 
 >>> # simple multiplication:
->>> specs = {"valve_percent": 100 * Tag("houston.ro.REMOTE_AI[22]")}
+>>> specs = {"valve_percent": 100 * Tag(VALVE_22)}
 >>> tag_resolver.resolve(specs)
 {'valve': 39.25000130113021085}
 
 
 >>> # fetch multiple values in a single API call and also perform some math:
->>> METER_A = "houston.ro.REMOTE_AI[3]"  # just for readability...
->>> METER_B = "houston.ro.REMOTE_AI[4]"
 >>> specs = {
 ...     "pressure_1": Tag(METER_A),
 ...     "pressure_2": Tag(METER_B),
@@ -263,6 +271,28 @@ Get your API key from https://openindustrialdata.com/get-started/
  'p1_percent': 3.763440860215054}
 ```
 
+#### Usage with Series
+
+``` python
+
+>>> specs = {"valve": Tag(VALVE_22)}
+>>> tag_resolver = TagResolver(get_series)
+>>> tag_resolver.resolve(specs)
+{'valve': 2021-06-16 17:21:08    0.239425
+          2021-06-16 17:21:09    1.350200
+          2021-06-16 17:21:10    2.743576
+          2021-06-16 17:21:11    3.544276
+          2021-06-16 17:21:12    3.873974
+          2021-06-16 17:21:14    4.254700
+          2021-06-16 17:21:15    4.509826
+          2021-06-16 17:21:16    4.662900
+          2021-06-16 17:21:17    4.702150
+          2021-06-16 17:21:18    4.706076
+          Name: houston.ro.REMOTE_AI[22], dtype: float64,
+}
+```
+> The value in the output above is an instance of `pandas.Series`, indented for readability.
+
 ## Advanced Usage
 
 ### Custom function calls on single Tag value
@@ -271,7 +301,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 >>> custom_operations = {
 ...     "md5": lambda a: hashlib.md5(str(a).encode()).hexdigest(),
 ... }
->>> tag_resolver = TagResolver(retrival_call, custom_operations)
+>>> tag_resolver = TagResolver(get_latest, custom_operations)
 
 >>> specs = {
 ...     "pressure": Tag(METER_A),
@@ -285,10 +315,9 @@ Get your API key from https://openindustrialdata.com/get-started/
 ### Custom function calls on multiple Tag values
 
 ``` python
->>> custom_operations = {"max": max, "sum": sum}  # these are builtins, but we can use any callables that take *args
->>> tag_resolver = TagResolver(retrival_call, custom_operations)
+>>> custom_operations = {"max": max, "sum": lambda *vals: sum([*vals])}
+>>> tag_resolver = TagResolver(get_latest, custom_operations)
 
->>> METER_C = "houston.ro.REMOTE_AI[5]"
 >>> specs = {
 ...     "pressure_1": Tag(METER_A),
 ...     "pressure_2": Tag(METER_B),
@@ -305,4 +334,86 @@ Get your API key from https://openindustrialdata.com/get-started/
  'pressure_3': 20.05,
  'pressure_highest': 30.95,
  'highest_to_total_ratio': 0.4415121255349501}
+```
+
+### Operations on Series
+
+This example is intentionally as similar as possible to the previous example. The only difference is the retrieval 
+function passed to `TagResolver` (`get_series` in this example vs `get_latest` in the previous one).
+
+``` python
+>>> custom_operations = {"max": max, "sum": lambda *vals: sum([*vals])}
+>>> tag_resolver = TagResolver(get_series, custom_operations)
+
+>>> specs = {
+...     "pressure_1": Tag(METER_A),
+...     "pressure_2": Tag(METER_B),
+...     "pressure_3": Tag(METER_C),
+...     "pressure_highest": Tag.call("max", Tag(METER_A), Tag(METER_B), Tag(METER_C)),
+...     "highest_to_total_ratio": (
+...         Tag.call("max", Tag(METER_A), Tag(METER_B), Tag(METER_C))
+..          / Tag.call("sum", Tag(METER_A), Tag(METER_B), Tag(METER_C))
+...     ),
+... }
+>>> tag_resolver.resolve(specs)
+{'pressure_1': 2021-06-16 17:23:37    48.30
+               2021-06-16 17:23:38    48.25
+               2021-06-16 17:23:39    48.15
+               ...
+               Name: houston.ro.REMOTE_AI[3], dtype: float64,
+ 'pressure_2': 2021-06-16 17:23:37    42.30
+               2021-06-16 17:23:38    42.10
+               2021-06-16 17:23:39    42.10
+               ...
+               Name: houston.ro.REMOTE_AI[4], dtype: float64,
+ 'pressure_3': 2021-06-16 17:23:37    119.95
+               2021-06-16 17:23:38    120.20
+               2021-06-16 17:23:39    120.10
+               ...
+               Name: houston.ro.REMOTE_AI[5], dtype: float64,
+ 'pressure_highest': 2021-06-16 17:23:37     119.95
+                     2021-06-16 17:23:38     120.20
+                     2021-06-16 17:23:39     120.10
+                     ...
+                     dtype: float64,
+ 'highest_to_total_ratio': 2021-06-16 17:23:37     0.569698
+                           2021-06-16 17:23:38     0.570886
+                           2021-06-16 17:23:39     0.570953
+                           ...
+                           dtype: float64,
+}
+```
+> The value in the output above is an instance of `pandas.Series`, indented and trimmed for readability.
+
+
+### But, where are the DataFrames?!
+
+Results from `TagResolver.resolve` can be passed directly to `pd.DataFrame` to get the expected dataframe.
+
+This is a natural fit for series results, e.g:
+
+``` python
+>>> # from the previous example...
+>>> data = tag_resolver.resolve(specs)
+>>> pd.DataFrame(data)
+                     pressure_1  pressure_2  pressure_3  pressure_highest  highest_to_total_ratio
+2021-06-16 17:42:50       49.65       39.55      139.10            139.10                0.609286
+2021-06-16 17:42:51       49.85       39.80      138.70            138.70                0.607401
+2021-06-16 17:42:53       49.50       39.45      138.50            138.50                0.608925
+...
+```
+
+For single-value responses, the DataFrame will have a single row, and the call requires an index as well:
+
+``` python
+>>> data = {   # from a previous example
+...     'pressure_1': 30.95,
+...     'pressure_2': 19.1,
+...     'pressure_3': 20.05,
+...     'pressure_highest': 30.95,
+...     'highest_to_total_ratio': 0.4415121255349501,
+... }
+>>> pd.DataFrame(data, index=[0])
+   pressure_1  pressure_2  pressure_3  pressure_highest  highest_to_total_ratio
+0       30.95        19.1       20.05             30.95                0.441512
 ```
