@@ -12,6 +12,7 @@ DEFAULT_LIMIT = 10
 __all__ = [
     "retrieve_datapoints_df",
     "latest_datapoint",
+    "series",
 ]
 
 
