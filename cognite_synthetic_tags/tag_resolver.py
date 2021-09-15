@@ -64,11 +64,14 @@ class TagResolver:
                 )
             else:
                 self._real_tags.add(tag.name)
+        self._real_tags -= set(literals.keys())
 
+        self.context.update(literals)
         # fetch all the data from CDF:
         self.context.update(
             self.value_store(self._real_tags),
         )
+        self.context = self._make_series(self.context)
 
         # perform calculations according to tag specs
         result = {}
@@ -80,7 +83,7 @@ class TagResolver:
                 result[key] = self._resolve_formula(tag.formula)
 
         # add the literal values back into the result:
-        result.update(literals)
+        result.update({key: self.context[key] for key in literals})
 
         return result
 
@@ -152,8 +155,13 @@ class TagResolver:
             ]
             # apply the operation, element-wise, and make a new pd.Series:
             result = pd.Series(
-                operation(*[single_series[i] for single_series in all_series])
-                for i in index
+                (
+                    operation(
+                        *[single_series[i] for single_series in all_series]
+                    )
+                    for i in index
+                ),
+                index=index
             )
         else:
             result = operation(*values)
@@ -172,3 +180,29 @@ class TagResolver:
             key: value for key, value in specs.items() if key not in literals
         }
         return new_specs, literals
+
+    def _make_series(self, data: TagResolverContextT) -> TagResolverContextT:
+        series: Dict[str, pd.Series] = {
+            key: val for key, val in data.items()
+            if isinstance(val, pd.Series)
+        }
+        if not series:
+            return data
+        index = list(series.values())[0].index
+        # check that all series have the same indexes:
+        # (all are returned from the same CDF API call, so they should)
+        for single_series in series.values():
+            assert all(
+                single_series.index == index
+            ), "Series need to have the same index."
+        # convert any non-series items to series:
+        # (repeat the item for every index)
+        all_series: Dict[str, pd.Series] = {
+            key: (
+                val
+                if isinstance(val, pd.Series)
+                else pd.Series([val] * len(index), index=index)
+            )
+            for key, val in data.items()
+        }
+        return all_series
