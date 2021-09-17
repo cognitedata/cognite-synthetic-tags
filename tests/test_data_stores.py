@@ -170,3 +170,23 @@ def test_unknown_tag_dont_tollerate(client):
         pass
     else:
         assert False, "Didn't raise the expected exception."
+
+
+def test_series(client):
+    store = data_stores.series(
+        client,
+        query_by="external_id",
+        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
+        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        ignore_unknown_ids=False,
+    )
+
+    values = store({"houston.ro.REMOTE_AI[22]"})
+    assert isinstance(values, dict), "Value should be a dict"
+    assert "houston.ro.REMOTE_AI[22]" in values, "Tag missing from result"
+    assert isinstance(
+        values["houston.ro.REMOTE_AI[22]"], pd.Series
+    ), "Values should be Series instances."
+    assert (
+        len(values["houston.ro.REMOTE_AI[22]"]) > 1
+    ), "Multiple values expected."

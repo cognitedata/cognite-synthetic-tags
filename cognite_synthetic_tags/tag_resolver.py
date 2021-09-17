@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, cast, Optional
+
+import pandas as pd
 
 from . import Tag
 from ._operations import default_operations
@@ -62,11 +64,15 @@ class TagResolver:
                 )
             else:
                 self._real_tags.add(tag.name)
+        self._real_tags -= set(literals.keys())
 
+        self.context.update(literals)
         # fetch all the data from CDF:
         self.context.update(
             self.value_store(self._real_tags),
         )
+        values, _ = self._make_series(list(self.context.values()))
+        self.context = dict(zip(self.context.keys(), values))
 
         # perform calculations according to tag specs
         result = {}
@@ -78,18 +84,22 @@ class TagResolver:
                 result[key] = self._resolve_formula(tag.formula)
 
         # add the literal values back into the result:
-        result.update(literals)
+        result.update({key: self.context[key] for key in literals})
 
         return result
 
     def _collect_tags_from_formula(
         self, key: str, formula: TagFormulaT
     ) -> Set[str]:
+        """
+        Given a tag formula, recursively collect all other tag names mentioned
+        in the formula.
+        """
         tags = set()
         for item in formula[1]:
             self._recursive_tags += [self._recursive_tags[-1].copy()]
             if hasattr(item, "formula"):
-                item = self._handle_recursive_tags(key, item)
+                item = self._handle_recursive_tags(item)
                 if item.formula:
                     tags.update(
                         self._collect_tags_from_formula(key, item.formula)
@@ -101,7 +111,7 @@ class TagResolver:
         assert operator_ in self.operations, f"Unknown operator: {operator_}"
         return tags
 
-    def _handle_recursive_tags(self, key: str, tag: Tag) -> Tag:
+    def _handle_recursive_tags(self, tag: Tag) -> Tag:
         if tag.name in self._specs:
             if tag.name in self._recursive_tags[-1]:
                 raise ValueError(
@@ -114,7 +124,8 @@ class TagResolver:
         return tag
 
     def _resolve_formula(self, formula: TagFormulaT) -> TagValueT:
-        values = []
+        """Take a formula and return a value."""
+        values: List[TagValueT] = []
         for item in formula[1]:
             if hasattr(item, "formula"):
                 if item.formula:
@@ -123,16 +134,30 @@ class TagResolver:
                     values.append(self.context[item.name])
             else:
                 # literal, for example when multiplying with an integer
-                values.append(item)
+                values.append(cast(TagValueT, item))
         operator_ = formula[0]
         assert operator_ in self.operations, f"Unknown operator: {operator_}"
         operation: OperationT = self.operations[operator_]
-        result = operation(*values)
+
+        # If any pd.Series instance, apply the operation element-wise
+        values, series_index = self._make_series(values)
+        if series_index is not None:
+            result = pd.Series(
+                (
+                    operation(*[series[i] for series in values])
+                    for i in series_index
+                ),
+                index=series_index
+            )
+        # otherwise it's just numbers, apply the operation directly:
+        else:
+            result = operation(*values)
+
         return result
 
     def _extract_literals_from_specs(
-            self,
-            specs: TagSpecsT,
+        self,
+        specs: TagSpecsT,
     ) -> Tuple[TagSpecsT, TagResolverContextT]:
         literals: TagResolverContextT = {}
         for key, value in specs.items():
@@ -143,3 +168,39 @@ class TagResolver:
             key: value for key, value in specs.items() if key not in literals
         }
         return new_specs, literals
+
+    def _make_series(
+        self,
+        data: List[TagValueT],
+    ) -> Tuple[TagValueT, Optional[pd.Index]]:
+        """
+        Take a list of values, and if any of the items is a `pd.Series`
+        instance, change other values into `pd.Series` as well.
+
+        Returns a 2-tuple:
+        - list of values, either unchanged or with each item a `pd.Series`,
+        - an index for the series or None. All series have the same index.
+        """
+        series: List[pd.Series] = [
+            val for val in data
+            if isinstance(val, pd.Series)
+        ]
+        if not series:
+            return data, None
+
+        # check that all series have the same indexes:
+        # (all are returned from the same CDF API call, so they should)
+        index = series[0].index
+        for single_series in series:
+            assert all(
+                single_series.index == index
+            ), "Series need to have the same index."
+        # convert any non-series items to series:
+        # (repeat the item for every index)
+        all_series: List[pd.Series] = [
+            val
+            if isinstance(val, pd.Series)
+            else pd.Series([val] * len(index), index=index)
+            for val in data
+        ]
+        return all_series, index

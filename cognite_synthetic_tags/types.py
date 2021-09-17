@@ -3,15 +3,16 @@ from __future__ import annotations
 from datetime import datetime
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     Dict,
     Iterable,
     List,
+    Set,
     Tuple,
     Union,
 )
 
+import pandas as pd
 from mypy_extensions import VarArg
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 TagFormulaT = Tuple[str, Tuple["Tag", ...]]
 
 # value from CDF
-TagValueT = Any
+TagValueT = Union[str, float, pd.Series]  # note: np.nan is subtype of float
 
 # internal:
 TagSpecsT = Dict[str, "Tag"]  # unresolved specs
@@ -47,3 +48,6 @@ CogniteExternalIdT = Union[
     Dict[str, Union[int, List[str]]],
     List[Dict[str, Union[int, List[str]]]],
 ]
+
+
+RetrievalFuncT = Callable[[Set[str]], Dict[str, TagValueT]]
