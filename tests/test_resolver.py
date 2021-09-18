@@ -382,6 +382,100 @@ def test_literal_value_used_in_formula(value_store):
     assert value == expected
 
 
+def test_comparators(value_store):
+    specs = {
+        "A2_status1": Tag("A2") > 1,
+        "A2_status2": Tag("A2") > 4,
+        "A2_status3": Tag("A2") > 1,
+        "A2_status4": Tag("A2") > 4,
+        "A2_status5": Tag("A2") >= 2,
+        "A2_status6": Tag("A2") <= 2,
+        "A2_status7": Tag("A2") >= 1,
+        "A2_status8": Tag("A2") >= 4,
+        "A2_status9": Tag("A2") <= 1,
+        "A2_status10": Tag("A2") <= 4,
+        "A2_status11": Tag("A2") == 4,
+        "A2_status12": Tag("A2") != 4,
+        "A2_status13": Tag("A2") == 2,
+        "A2_status14": Tag("A2") != 2,
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "A2_status1": True,
+        "A2_status2": False,
+        "A2_status3": True,
+        "A2_status4": False,
+        "A2_status5": True,
+        "A2_status6": True,
+        "A2_status7": True,
+        "A2_status8": False,
+        "A2_status9": False,
+        "A2_status10": True,
+        "A2_status11": False,
+        "A2_status12": True,
+        "A2_status13": True,
+        "A2_status14": False,
+    }
+    assert value == expected
+
+
+def test_reversed_comparators(value_store):
+    specs = {
+        "A2_status1": 1 < Tag("A2"),
+        "A2_status2": 4 < Tag("A2"),
+        "A2_status3": 1 > Tag("A2"),
+        "A2_status4": 4 > Tag("A2"),
+        "A2_status5": 2 <= Tag("A2"),
+        "A2_status6": 2 >= Tag("A2"),
+        "A2_status7": 1 <= Tag("A2"),
+        "A2_status8": 4 <= Tag("A2"),
+        "A2_status9": 1 >= Tag("A2"),
+        "A2_status10": 4 >= Tag("A2"),
+        "A2_status11": 4 == Tag("A2"),
+        "A2_status12": 4 != Tag("A2"),
+        "A2_status13": 2 == Tag("A2"),
+        "A2_status14": 2 != Tag("A2"),
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "A2_status1": True,
+        "A2_status2": False,
+        "A2_status3": False,
+        "A2_status4": True,
+        "A2_status5": True,
+        "A2_status6": True,
+        "A2_status7": True,
+        "A2_status8": False,
+        "A2_status9": False,
+        "A2_status10": True,
+        "A2_status11": False,
+        "A2_status12": True,
+        "A2_status13": True,
+        "A2_status14": False,
+    }
+    assert value == expected
+
+
+def test_comparison_after_math(value_store):
+
+    specs = {
+        "status1": Tag("A2") * Tag("A3") < 5,
+        "status2": Tag("A2") * Tag("A3") > 5,
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "status1": False,
+        "status2": True,
+    }
+    assert value == expected
+
+
 def test_series_math(series_value_store):
     specs = {
         "A3": Tag("A98") + 1,

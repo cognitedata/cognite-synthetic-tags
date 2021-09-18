@@ -58,6 +58,24 @@ class Tag:
     def __xor__(self, other: Any) -> Tag:
         return self.calc("^", other)  # bitwise
 
+    def __gt__(self, other: Any) -> Tag:
+        return self.calc("gt", other)
+
+    def __ge__(self, other: Any) -> Tag:
+        return self.calc("ge", other)
+
+    def __lt__(self, other: Any) -> Tag:
+        return self.calc("lt", other)
+
+    def __le__(self, other: Any) -> Tag:
+        return self.calc("le", other)
+
+    def __eq__(self, other: Any) -> Tag:
+        return self.calc("eq", other)
+
+    def __ne__(self, other: Any) -> Tag:
+        return self.calc("ne", other)
+
     # reverse binary operations (e.g: 42 + Tag)
 
     def __radd__(self, other: Any) -> Tag:

@@ -22,6 +22,13 @@ default_operations: Dict[str, Callable] = {
     "or": lambda a, b: a or b,
     "bool": lambda a: bool(a),
     "not": lambda a: not bool(a),
+    # comparisons:
+    "gt": lambda a, b: a > b,
+    "ge": lambda a, b: a >= b,
+    "lt": lambda a, b: a < b,
+    "le": lambda a, b: a <= b,
+    "eq": lambda a, b: a == b,
+    "ne": lambda a, b: a != b,
     # math module:
     "sin": math.sin,
     "cos": math.cos,
