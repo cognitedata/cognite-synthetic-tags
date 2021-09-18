@@ -102,6 +102,8 @@ def series(
     client: CogniteClient,
     start: CogniteTimeT,
     end: CogniteTimeT,
+    aggregate: Optional[str] = None,
+    granularity: Optional[str] = None,
     include_outside_points: bool = None,
     limit: int = DEFAULT_LIMIT,
     query_by: Literal["id", "external_id"] = "id",
@@ -115,6 +117,8 @@ def series(
             **{query_by: list(tags)},  # type: ignore
             start=start,
             end=end,
+            aggregates=[aggregate] if aggregate else None,
+            granularity=granularity,
             include_outside_points=include_outside_points,
             ignore_unknown_ids=ignore_unknown_ids,
             limit=limit,
@@ -126,6 +130,10 @@ def series(
         if fillna is not None:
             df = df.fillna(fillna)
             # (BTW, Pandas doesn't support df.fillna(None) ¯\_(ツ)_/¯ )
+        if aggregate:
+            df.columns = [
+                col.replace(f"|{aggregate}", "") for col in df.columns
+            ]
         resolved = {col: df[col] for col in df.columns}
         return resolved
 
