@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from .tag import Tag  # noqa  # pragma: no cover
 
 
-TagFormulaT = Tuple[str, Tuple["Tag", ...]]
+TagFormulaT = Tuple["OperatorT", Tuple["Tag", ...]]
 
 # value from CDF
 TagValueT = Union[str, float, pd.Series]  # note: np.nan is subtype of float
@@ -30,7 +30,7 @@ TagResolverContextT = Dict[str, TagValueT]  # resolved values
 TagValueStoreT = Callable[[Iterable[str]], TagResolverContextT]  # API call
 
 OperationT = Callable[[VarArg(TagValueT)], TagValueT]
-
+OperatorT = Union[OperationT, str]
 
 #
 

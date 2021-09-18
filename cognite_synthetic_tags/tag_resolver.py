@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Set, Tuple, cast, Optional
+from typing import Dict, List, Optional, Set, Tuple, cast
 
 import pandas as pd
 
@@ -108,7 +108,10 @@ class TagResolver:
                     tags.add(item.name)
             self._recursive_tags.pop()
         operator_ = formula[0]
-        assert operator_ in self.operations, f"Unknown operator: {operator_}"
+        if not callable(operator_):
+            assert (
+                operator_ in self.operations
+            ), f"Unknown operator: {operator_}"
         return tags
 
     def _handle_recursive_tags(self, tag: Tag) -> Tag:
@@ -136,18 +139,25 @@ class TagResolver:
                 # literal, for example when multiplying with an integer
                 values.append(cast(TagValueT, item))
         operator_ = formula[0]
-        assert operator_ in self.operations, f"Unknown operator: {operator_}"
-        operation: OperationT = self.operations[operator_]
+        operation: OperationT
+        if callable(operator_):
+            operation = operator_
+        else:
+            assert (
+                operator_ in self.operations
+            ), f"Unknown operator: {operator_}"
+            operation = self.operations[operator_]
 
         # If any pd.Series instance, apply the operation element-wise
         values, series_index = self._make_series(values)
         if series_index is not None:
+            values_series: List[pd.Series] = values  # keeping mypy happy
             result = pd.Series(
                 (
-                    operation(*[series[i] for series in values])
+                    operation(*[series[i] for series in values_series])
                     for i in series_index
                 ),
-                index=series_index
+                index=series_index,
             )
         # otherwise it's just numbers, apply the operation directly:
         else:
@@ -172,7 +182,7 @@ class TagResolver:
     def _make_series(
         self,
         data: List[TagValueT],
-    ) -> Tuple[TagValueT, Optional[pd.Index]]:
+    ) -> Tuple[List[TagValueT], Optional[pd.Index]]:
         """
         Take a list of values, and if any of the items is a `pd.Series`
         instance, change other values into `pd.Series` as well.
@@ -182,8 +192,7 @@ class TagResolver:
         - an index for the series or None. All series have the same index.
         """
         series: List[pd.Series] = [
-            val for val in data
-            if isinstance(val, pd.Series)
+            val for val in data if isinstance(val, pd.Series)
         ]
         if not series:
             return data, None

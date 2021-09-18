@@ -131,7 +131,7 @@ In the next example, the CDF time series API endpoint is hit only once with a qu
 
 ### Multi-value Lookups (Series)
 
-While the primary motivation for **Synthetic Tags** library was to facilitate single-value lookups, as seen in the 
+While the primary motivation for **Synthetic Tags** library was to facilitate single-value lookups, as seen in the
 examples above, the library also supports retrieval of multiple datapoints (as `pd.Series`) as well as performing
 element-wise operations on them.
 
@@ -236,7 +236,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 
 >>> # just for readability:
 >>> VALVE_22 = "houston.ro.REMOTE_AI[22]"
->>> METER_A = "houston.ro.REMOTE_AI[3]"  
+>>> METER_A = "houston.ro.REMOTE_AI[3]"
 >>> METER_B = "houston.ro.REMOTE_AI[4]"
 >>> METER_C = "houston.ro.REMOTE_AI[5]"
 ```
@@ -338,7 +338,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 
 ### Operations on Series
 
-This example is intentionally as similar as possible to the previous example. The only difference is the retrieval 
+This example is intentionally as similar as possible to the previous example. The only difference is the retrieval
 function passed to `TagResolver` (`get_series` in this example vs `get_latest` in the previous one).
 
 ``` python

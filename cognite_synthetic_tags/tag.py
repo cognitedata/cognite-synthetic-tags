@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .types import TagFormulaT
+from .types import OperatorT, TagFormulaT
 
 
 class Tag:
@@ -17,12 +17,16 @@ class Tag:
     def __repr__(self):
         return self.__str__()
 
-    def calc(self, operator_: str, *args: Any) -> Tag:
+    def calc(self, operator_: OperatorT, *args: Any) -> Tag:
         return Tag.call(operator_, self, *args)
 
     @classmethod
-    def call(cls, operator_: str, *args: Any) -> Tag:
-        new_tag = Tag(f"{operator_}([{'], ['.join(map(str, args))}])")
+    def call(cls, operator_: OperatorT, *args: Any) -> Tag:
+        if callable(operator_):
+            oper_str = operator_.__name__
+        else:
+            oper_str = str(operator_)
+        new_tag = Tag(f"{oper_str}([{'], ['.join(map(str, args))}])")
         new_tag.formula = (operator_, args)
         return new_tag
 
@@ -70,10 +74,10 @@ class Tag:
     def __le__(self, other: Any) -> Tag:
         return self.calc("le", other)
 
-    def __eq__(self, other: Any) -> Tag:
+    def __eq__(self, other: Any) -> Tag:  # type: ignore
         return self.calc("eq", other)
 
-    def __ne__(self, other: Any) -> Tag:
+    def __ne__(self, other: Any) -> Tag:  # type: ignore
         return self.calc("ne", other)
 
     # reverse binary operations (e.g: 42 + Tag)

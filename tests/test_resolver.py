@@ -242,6 +242,36 @@ def test_call_custom_operation(value_store):
     assert value == expected
 
 
+def test_call_literal_functions(value_store):
+    def foo(a, b):
+        return f"{a} and {b}"
+
+    specs = {
+        "value_1": Tag.call(foo, Tag("A2"), Tag("B7")),
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "value_1": "2 and 7",
+    }
+    assert value == expected
+
+
+def test_calc_literal_functions(value_store):
+    def foo(a):
+        return f"foo of {a}"
+
+    specs = {"value_1": Tag("A2").calc(foo)}
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "value_1": "foo of 2",
+    }
+    assert value == expected
+
+
 def test_recursive_spec(value_store):
     specs = {
         "value_1": Tag("A1") + Tag("B2"),
