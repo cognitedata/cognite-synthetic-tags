@@ -22,7 +22,7 @@ class Tag:
 
     @classmethod
     def call(cls, operator_: str, *args: Any) -> Tag:
-        new_tag = Tag(f"({operator_}: [{'] ['.join(map(str, args))}])")
+        new_tag = Tag(f"{operator_}([{'], ['.join(map(str, args))}])")
         new_tag.formula = (operator_, args)
         return new_tag
 
