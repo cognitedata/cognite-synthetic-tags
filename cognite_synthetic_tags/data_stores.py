@@ -108,7 +108,7 @@ def series(
     limit: int = DEFAULT_LIMIT,
     query_by: Literal["id", "external_id"] = "id",
     ignore_unknown_ids: bool = True,
-    ffill: bool = True,
+    ffill: bool = False,
     fillna: Any = None,
 ) -> RetrievalFuncT:
     def _retrieve(tags: Set[str]) -> Dict[str, TagValueT]:
