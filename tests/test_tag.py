@@ -10,12 +10,21 @@ def test_tag_str():
     assert value == expected
 
 
-def test_tag_str_with_operator():
+def test_tag_str_with_infix_operator():
     tag = Tag("A2") * Tag("B3")
 
     value = str(tag)
 
-    expected = "*([A2], [B3])"
+    expected = "([A2] * [B3])"
+    assert value == expected
+
+
+def test_tag_str_with_prefix_operator():
+    tag = ~Tag("A2")
+
+    value = str(tag)
+
+    expected = "not([A2])"
     assert value == expected
 
 

@@ -32,3 +32,22 @@ default_operations: Dict[str, Callable] = {
     "r//": lambda a, b: b // a,
     "recip": lambda a: 1.0 / a,
 }
+
+INFIX_OPERATORS = (
+    "+",
+    "-",
+    "*",
+    "/",
+    "//",
+    "%",
+    "**",
+    "and"
+    "or"
+    "xor"
+    "gt",
+    "ge",
+    "lt",
+    "le",
+    "eq",
+    "ne",
+)

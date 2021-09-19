@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from ._operations import INFIX_OPERATORS
 from .types import OperatorT, TagFormulaT
 
 
@@ -27,7 +28,10 @@ class Tag:
             oper_str = operator_.__name__
         else:
             oper_str = str(operator_)
-        new_tag = Tag(f"{oper_str}([{'], ['.join(map(str, args))}])")
+        if oper_str in INFIX_OPERATORS:
+            new_tag = Tag(f"([{f'] {oper_str} ['.join(map(str, args))}])")
+        else:
+            new_tag = Tag(f"{oper_str}([{'], ['.join(map(str, args))}])")
         new_tag.formula = (operator_, args)
         return new_tag
 
