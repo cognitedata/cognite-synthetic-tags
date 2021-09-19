@@ -177,7 +177,7 @@ class TagResolver:
                 else:
                     values.append(self.context[item.name])
             else:
-                # literal, for example when multiplying with an integer
+                # literal, for example when adding an integer to a `Tag`
                 values.append(cast(TagValueT, item))
         operator_ = formula[0]
         operation: OperationT
