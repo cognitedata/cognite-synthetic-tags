@@ -7,6 +7,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Optional,
     Set,
     Tuple,
     Union,
@@ -27,7 +28,8 @@ TagValueT = Union[str, float, pd.Series]  # note: np.nan is subtype of float
 # internal:
 TagSpecsT = Dict[str, "Tag"]  # unresolved specs
 TagResolverContextT = Dict[str, TagValueT]  # resolved values
-TagValueStoreT = Callable[[Iterable[str]], TagResolverContextT]  # API call
+TagValueStoreResultT = Tuple[TagResolverContextT, Optional[pd.Index]]
+TagValueStoreT = Callable[[Iterable[str]], TagValueStoreResultT]  # API call
 
 OperationT = Callable[[VarArg(TagValueT)], TagValueT]
 OperatorT = Union[OperationT, str]
@@ -50,4 +52,4 @@ CogniteExternalIdT = Union[
 ]
 
 
-RetrievalFuncT = Callable[[Set[str]], Dict[str, TagValueT]]
+RetrievalFuncT = Callable[[Set[str]], TagValueStoreResultT]

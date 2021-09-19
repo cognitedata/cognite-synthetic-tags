@@ -49,10 +49,11 @@ def test_latest_aggregate(client):
         fillna=0,
     )
 
-    value = store({"houston.ro.REMOTE_AI[22]"})
+    value, index = store({"houston.ro.REMOTE_AI[22]"})
 
     expected = 5.371694281525284
     assert value["houston.ro.REMOTE_AI[22]"] == expected
+    assert index is None
 
 
 def test_latest_value(client):
@@ -63,10 +64,11 @@ def test_latest_value(client):
         end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
     )
 
-    value = store({"houston.ro.REMOTE_AI[22]"})
+    value, index = store({"houston.ro.REMOTE_AI[22]"})
 
     expected = 0.003925000131130218
     assert value["houston.ro.REMOTE_AI[22]"] == expected
+    assert index is None
 
 
 def test_missing_tags_filled(client):
@@ -77,9 +79,10 @@ def test_missing_tags_filled(client):
         end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
     )
 
-    value = store({"houston.ro.REMOTE_AI[22]", "FOO.bar"})
+    value, index = store({"houston.ro.REMOTE_AI[22]", "FOO.bar"})
 
     assert np.isnan(value["FOO.bar"])
+    assert index is None
 
 
 def test_missing_tags_fill_with(client):
@@ -92,9 +95,10 @@ def test_missing_tags_fill_with(client):
         fillna=special_value,
     )
 
-    value = store({"houston.ro.REMOTE_AI[22]", "FOO.bar"})
+    value, index = store({"houston.ro.REMOTE_AI[22]", "FOO.bar"})
 
     assert value["FOO.bar"] is special_value
+    assert index is None
 
 
 def test_no_ffill(mocked_client):
@@ -106,9 +110,10 @@ def test_no_ffill(mocked_client):
         ffill=False,
     )
 
-    value = store({"houston.ro.REMOTE_AI[22]"})
+    value, index = store({"houston.ro.REMOTE_AI[22]"})
 
     assert np.isnan(value["houston.ro.REMOTE_AI[22]"])
+    assert index is None
 
 
 def test_no_ffill_filna_value(mocked_client):
@@ -122,9 +127,10 @@ def test_no_ffill_filna_value(mocked_client):
         fillna=special_value,
     )
 
-    value = store({"houston.ro.REMOTE_AI[22]"})
+    value, index = store({"houston.ro.REMOTE_AI[22]"})
 
     assert value["houston.ro.REMOTE_AI[22]"] is special_value
+    assert index is None
 
 
 def test_unknown_tag_tollerate(client):
@@ -135,9 +141,10 @@ def test_unknown_tag_tollerate(client):
         end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
     )
 
-    value = store({"FOO.bar"})
+    value, index = store({"FOO.bar"})
 
     assert np.isnan(value["FOO.bar"])
+    assert index is None
 
 
 def test_unknown_tag_tollerate_with_fillna_value(client):
@@ -150,9 +157,10 @@ def test_unknown_tag_tollerate_with_fillna_value(client):
         fillna=special_value,
     )
 
-    value = store({"FOO.bar"})
+    value, index = store({"FOO.bar"})
 
     assert value["FOO.bar"] is special_value
+    assert index is None
 
 
 def test_unknown_tag_dont_tollerate(client):
@@ -172,6 +180,21 @@ def test_unknown_tag_dont_tollerate(client):
         assert False, "Didn't raise the expected exception."
 
 
+def test_empty(client):
+    store = data_stores.latest_datapoint(
+        client,
+        query_by="external_id",
+        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
+        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        ignore_unknown_ids=False,
+    )
+
+    values, index = store(set())
+    assert isinstance(values, dict), "Value should be a dict"
+    assert not values, "Expecting empty values"
+    assert index is None, "Expecting None for index"
+
+
 def test_series(client):
     store = data_stores.series(
         client,
@@ -181,7 +204,7 @@ def test_series(client):
         ignore_unknown_ids=False,
     )
 
-    values = store({"houston.ro.REMOTE_AI[22]"})
+    values, index = store({"houston.ro.REMOTE_AI[22]"})
     assert isinstance(values, dict), "Value should be a dict"
     assert "houston.ro.REMOTE_AI[22]" in values, "Tag missing from result"
     assert isinstance(
@@ -190,3 +213,20 @@ def test_series(client):
     assert (
         len(values["houston.ro.REMOTE_AI[22]"]) > 1
     ), "Multiple values expected."
+    assert isinstance(index, pd.Index), "series store must return an index"
+
+
+def test_series_empty(client):
+    store = data_stores.series(
+        client,
+        query_by="external_id",
+        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
+        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        ignore_unknown_ids=False,
+    )
+
+    values, index = store(set())
+    assert isinstance(values, dict), "Value should be a dict"
+    assert not values, "Expecting empty values"
+    assert isinstance(index, pd.Index), "series store must return an index"
+    assert len(index) == 0, "Expecting empty index"

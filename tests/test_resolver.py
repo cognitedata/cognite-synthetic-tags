@@ -412,6 +412,30 @@ def test_literal_value_used_in_formula(value_store):
     assert value == expected
 
 
+def test_literals_only(value_store):
+    specs = {
+        "lit1": 11,
+        "lit2": 22,
+    }
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {
+        "lit1": 11,
+        "lit2": 22,
+    }
+    assert value == expected
+
+
+def test_empty_specs(value_store):
+    specs = {}
+
+    value = TagResolver(value_store).resolve(specs)
+
+    expected = {}
+    assert value == expected
+
+
 def test_comparators(value_store):
     specs = {
         "A2_status1": Tag("A2") > 1,
@@ -592,6 +616,33 @@ def test_series_index_and_literals(series_value_store):
     assert expected.keys() == value.keys() and all(
         all(value[key] == expected[key]) for key in expected
     )
-
     assert all(value["lit"].index == value["calc"].index)
     assert len(value["lit"].index) == 7
+
+
+def test_series_only_literals(series_value_store):
+    specs = {
+        "lit1": 11,
+        "lit2": 22,
+    }
+
+    value = TagResolver(series_value_store).resolve(specs)
+
+    expected = {
+        "lit1": pd.Series([11] * 7, index=pd.Index(range(7))),
+        "lit2": pd.Series([22] * 7, index=pd.Index(range(7))),
+    }
+
+    assert expected.keys() == value.keys() and all(
+        all(value[key] == expected[key]) for key in expected
+    )
+    assert len(value["lit1"].index) == 7
+
+
+def test_series_empty_specs(series_value_store):
+    specs = {}
+
+    value = TagResolver(series_value_store).resolve(specs)
+
+    expected = {}
+    assert value == expected

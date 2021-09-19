@@ -68,11 +68,16 @@ class TagResolver:
 
         self.context.update(literals)
         # fetch all the data from CDF:
-        self.context.update(
-            self.value_store(self._real_tags),
-        )
-        values, _ = self._make_series(list(self.context.values()))
-        self.context = dict(zip(self.context.keys(), values))
+        values, index = self.value_store(self._real_tags)
+        self.context.update(values)
+        if index is not None:
+            self.context.update(
+                {"__dummy_series__": pd.Series({}, index=index)}
+            )
+        series_or_values, _ = self._make_series(list(self.context.values()))
+        self.context = dict(zip(self.context.keys(), series_or_values))
+        if index is not None:
+            del self.context["__dummy_series__"]
 
         # perform calculations according to tag specs
         result = {}

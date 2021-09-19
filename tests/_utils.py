@@ -3,7 +3,10 @@ from typing import Iterable
 import pandas as pd
 import pytest
 
-from cognite_synthetic_tags.types import TagResolverContextT
+from cognite_synthetic_tags.types import (
+    TagResolverContextT,
+    TagValueStoreResultT,
+)
 
 __all__ = [
     "value_store",
@@ -11,7 +14,7 @@ __all__ = [
 ]
 
 
-def dummy_value_store(tag_names: Iterable[str]) -> TagResolverContextT:
+def dummy_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
     """
     Value store for tests. Very dumb, returns int value ignoring
     the initial digit, e.g:
@@ -23,10 +26,10 @@ def dummy_value_store(tag_names: Iterable[str]) -> TagResolverContextT:
     for tag_name in tag_names:
         value = int(tag_name[1:])
         result[tag_name] = value
-    return result
+    return result, None
 
 
-def dummy_series_value_store(tag_names: Iterable[str]) -> TagResolverContextT:
+def dummy_series_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
     """
     Value store for tests. Very dumb, returns series of 7 int values,
     ignoring the first character of the tag name is (e.g. from 42 for tag "A42")
@@ -41,7 +44,7 @@ def dummy_series_value_store(tag_names: Iterable[str]) -> TagResolverContextT:
         values = [start_value + i for i in range(7)]
         values = [val - 100 if val >= 100 else val for val in values]
         result[tag_name] = pd.Series(values)
-    return result
+    return result, pd.Index(range(7))
 
 
 @pytest.fixture
