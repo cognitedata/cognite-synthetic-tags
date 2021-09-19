@@ -646,3 +646,87 @@ def test_series_empty_specs(series_value_store):
 
     expected = {}
     assert value == expected
+
+
+def test_multiple_data_stores(value_store, another_value_store):
+    specs = {
+        "A2": Tag("A2"),
+        "A3": Tag("A3", "alt_fetch"),
+    }
+
+    resolver = TagResolver(value_store, alt_fetch=another_value_store)
+    value = resolver.resolve(specs)
+
+    expected = {
+        "A2": 2,
+        "A3": 3333,
+    }
+    assert value == expected
+
+
+def test_multiple_data_stores_math(value_store, another_value_store):
+    specs = {
+        "sumitall": Tag("A2") + Tag("A3", "alt_fetch"),
+    }
+
+    resolver = TagResolver(value_store, alt_fetch=another_value_store)
+    value = resolver.resolve(specs)
+
+    expected = {
+        "sumitall": 3335,
+    }
+    assert value == expected
+
+
+def test_multiple_data_stores_tag_name_sum(value_store, another_value_store):
+    specs = {
+        "A2": Tag("A2"),
+        "A3": Tag("A3", "alt_fetch"),
+        "sumitall": Tag("A2") + Tag("A3", "alt_fetch"),
+    }
+
+    resolver = TagResolver(value_store, alt_fetch=another_value_store)
+    value = resolver.resolve(specs)
+
+    expected = {
+        "A2": 2,
+        "A3": 3333,
+        "sumitall": 3335,
+    }
+    assert value == expected
+
+
+def test_multiple_data_stores_same_tag(value_store, another_value_store):
+    specs = {
+        "value_2": Tag("A2"),
+        "value_3": Tag("A3"),
+        "sumitall": Tag("A2") + Tag("A3", "alt_fetch"),
+    }
+
+    resolver = TagResolver(value_store, alt_fetch=another_value_store)
+    value = resolver.resolve(specs)
+
+    expected = {
+        "value_2": 2,
+        "value_3": 3,
+        "sumitall": 3335,
+    }
+    assert value == expected
+
+
+def test_multiple_data_stores_same_tag2(value_store, another_value_store):
+    specs = {
+        "A2": Tag("A2"),
+        "A3": Tag("A3", "alt_fetch"),
+        "sumitall": Tag("A2") + Tag("A3"),
+    }
+
+    resolver = TagResolver(value_store, alt_fetch=another_value_store)
+    value = resolver.resolve(specs)
+
+    expected = {
+        "A2": 2,
+        "A3": 3333,
+        "sumitall": 5,
+    }
+    assert value == expected
