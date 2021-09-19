@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set, Tuple, cast
+from contextlib import suppress
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import pandas as pd
 
@@ -41,12 +42,21 @@ class TagResolver:
     3
     """
 
-    def __init__(self, value_store: TagValueStoreT, additional_operations=None):
+    def __init__(
+        self,
+        value_store: TagValueStoreT,
+        additional_operations=None,
+        **additional_stores: TagValueStoreT,
+    ):
         self.context: TagResolverContextT = {}
-        self.value_store = value_store
+        self._default_store_key = "value_store"
+        self.value_stores: Dict[str, TagValueStoreT] = {
+            self._default_store_key: value_store,
+            **additional_stores,
+        }
         self.operations = default_operations.copy()
         self.operations.update(additional_operations or {})
-        self._real_tags: Set[str] = set()
+        self._real_tags: Dict[str, Set[str]] = {}
         self._recursive_tags: List[Set[str]] = [set()]
         self._specs: TagSpecsT = {}
 
@@ -56,27 +66,38 @@ class TagResolver:
 
         # find all the actual CDF tags from the specs, recursively:
         self._specs = specs
-        self._real_tags = set()
+        self._real_tags = {
+            store_key: set() for store_key in self.value_stores.keys()
+        }
         for key, tag in specs.items():
             if tag.formula:
-                self._real_tags.update(
-                    self._collect_tags_from_formula(key, tag.formula),
-                )
+                tags = self._collect_tags_from_formula(key, tag.formula)
+                for store_key, store_tags in tags.items():
+                    self._real_tags[store_key].update(store_tags)
             else:
-                self._real_tags.add(tag.name)
-        self._real_tags -= set(literals.keys())
+                store_key = self._get_item_value_store(tag)
+                self._real_tags[store_key].add(tag.name)
+        for store_key in self.value_stores.keys():
+            self._real_tags[store_key] -= set(literals.keys())
 
         self.context.update(literals)
         # fetch all the data from CDF:
-        values, index = self.value_store(self._real_tags)
-        self.context.update(values)
-        if index is not None:
-            self.context.update(
-                {"__dummy_series__": pd.Series({}, index=index)}
-            )
+        for store_key, store_tags in self._real_tags.items():
+            values, index = self.value_stores[store_key](store_tags)
+            for key, val in values.items():
+                if key in self.context:
+                    raise ValueError(
+                        f"Duplicate definition (multiple stores): {key}"
+                    )
+            self.context.update(values)
+            if index is not None:
+                self.context.update(
+                    {"__dummy_series__": pd.Series({}, index=index)}
+                )
         series_or_values, _ = self._make_series(list(self.context.values()))
         self.context = dict(zip(self.context.keys(), series_or_values))
-        if index is not None:
+        if "__dummy_series__" in self.context:
+            # TODO yeah, it's a magical string...
             del self.context["__dummy_series__"]
 
         # perform calculations according to tag specs
@@ -95,22 +116,27 @@ class TagResolver:
 
     def _collect_tags_from_formula(
         self, key: str, formula: TagFormulaT
-    ) -> Set[str]:
+    ) -> Dict[str, Set[str]]:
         """
         Given a tag formula, recursively collect all other tag names mentioned
         in the formula.
         """
-        tags = set()
+        tags: Dict[str, Set[str]] = {
+            store_key: set() for store_key in self.value_stores.keys()
+        }
         for item in formula[1]:
             self._recursive_tags += [self._recursive_tags[-1].copy()]
             if hasattr(item, "formula"):
                 item = self._handle_recursive_tags(item)
                 if item.formula:
-                    tags.update(
-                        self._collect_tags_from_formula(key, item.formula)
+                    new_tags = self._collect_tags_from_formula(
+                        key,
+                        item.formula,
                     )
+                    for store_key, store_tags in new_tags.items():
+                        tags[store_key].update(store_tags)
                 else:
-                    tags.add(item.name)
+                    tags[self._get_item_value_store(item)].add(item.name)
             self._recursive_tags.pop()
         operator_ = formula[0]
         if not callable(operator_):
@@ -118,6 +144,16 @@ class TagResolver:
                 operator_ in self.operations
             ), f"Unknown operator: {operator_}"
         return tags
+
+    def _get_item_value_store(self, item: Any) -> str:
+        store_key = self._default_store_key
+        with suppress(AttributeError):
+            store_key = item.store or store_key
+        if store_key not in self.value_stores:
+            raise ValueError(
+                f"Unknown value store '{store_key}' for tag '{item}'."
+            )
+        return store_key
 
     def _handle_recursive_tags(self, tag: Tag) -> Tag:
         if tag.name in self._specs:

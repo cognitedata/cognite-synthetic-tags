@@ -6,8 +6,9 @@ from .types import OperatorT, TagFormulaT
 
 
 class Tag:
-    def __init__(self, name: str):
-        self.name = name
+    def __init__(self, name: str, store: Optional[str] = None):
+        self.name = f"{name}__{store}" if store else name
+        self.store = store
         self._value = None
         self.formula: Optional[TagFormulaT] = None
 
