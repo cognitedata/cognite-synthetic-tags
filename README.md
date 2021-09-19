@@ -177,7 +177,6 @@ examples above, the library also supports retrieval of multiple datapoints (as `
 element-wise operations on them.
 
 
-
 #### Avoiding Cache
 
 In case that the caching is not desired (i.e. if we wanted to query the CDF again in each of the three examples above)
@@ -185,38 +184,44 @@ we should create a new instance of `TagResolver` for each example (i.e. use `Tag
 instead of `resolver.resolve`).
 
 
+### Multiple Data Stores
+
+`Tag` class supports specifying a string key for an alternative data store. The corresponding argument has to be present
+in the `TagResolver` constructor call. This allows us to mix and match values from tags obtained from separate CDF API
+calls.
+
+For example, we can fetch a single average value of a time series and then multiply it with a series of values from
+another time series (or, indeed, the same one if desired):
+
+``` python
+>>> resolver = TagResolver(get_series, average=get_average)
+>>> resolver.resolve({
+...     "avg_value": Tag("METER_A", "average"),
+...     "above_average": Tag("METER_A") > Tag("METER_A", "average"),
+... })
+{
+    "avg_value": 42,
+    "above_average: <pd.Series of bool values, True for points that are above 42, False for others>,
+}
+```
+
+
+Note: All tags using any particular value store are gathered in a single API call, so no matter how many tags there are,
+the number of calls to the CDF API will always be equal to the number of value stores.
+
+There are two caveats to this:
+ 1. Any value stores that don't have a any tags are not used, i.e. no calls there.
+ 2. For really large number of tags, the CDF SDK might split up a single large query into multiple smaller queries
+    that it executes in parallel and then combines the results of. This is an internal implementation detail of
+    the Python CDF SDK and does not affect (not is being affected) by **Cognite Synthetic Tags**.
+
 ## Limitations
 
 * ~~single-value lookups~~  (implemented)
-* single data store
+* ~~single data store~~  (implemented)
 
-### Single Data Store
+> TODO This is not a perfect library, figure out its limitations & downsides.
 
-For now `TagResolver` class supports a single callable that it uses to fetch the values. This means that we can use it
-to (for example) fetch average values or max values, but we cannot "mix and match". In other words, it is not possible
-to use different API parameters when fetching different tags in a single call:
-
-``` python
->>> resolver.resolve({
-...     "avg_value": Tag("FOO"),  # if "FOO" is uses "average" aggregation, then "BAR" also has to (e.g. cannot use max)
-...     "max_value": Tag("BAR"),
-... })
-
-```
-
-This could be implemented by adding support for multiple `data_storage` callables on `TagResolver`:
-
-``` python
->>> resolver = TagResolver({"avg": average_data_store_func, "max": max_data_store_func})  # NOT IMPLEMENTED!
->>> resolver.resolve({
-...     "avg_value": Tag("FOO", data_store="avg"),  # NOT IMPLEMENTED!
-...     "max_value": Tag("BAR", data_store="max"),  # NOT IMPLEMENTED!
-... })
-```
-
-
-Note: This limitation only applies to a single `TagResolver.resolve` call. There is no issue with using two separate
-`TagResolver` instances, each with different `data_store` callable.
 
 ## Comparison with Synthetic Time Series API
 
@@ -264,7 +269,16 @@ Get your API key from https://openindustrialdata.com/get-started/
 ...         query_by="external_id",
 ...         start="90d-ago",
 ...         end="89d-ago",
-...         # agregate="average",  # if we wanted to use an agregate
+...     )(tags)
+
+>>> def get_average(tags):
+...     return latest_datapoint(
+...         client,
+...         query_by="external_id",
+...         start="90d-ago",
+...         end="89d-ago",
+...         aggregate="average",
+...         granularity="1h",
 ...     )(tags)
 
 >>> def get_series(tags):
@@ -457,4 +471,19 @@ For single-value responses, the DataFrame will have a single row, and the call r
 >>> pd.DataFrame(data, index=[0])
    pressure_1  pressure_2  pressure_3  pressure_highest  highest_to_total_ratio
 0       30.95        19.1       20.05             30.95                0.441512
+```
+
+### Mulitple Data Stores
+
+``` python
+>>> specs = {
+...     "avg_value": Tag(METER_A, "average"),
+...     "above_average": Tag(METER_A) > Tag(METER_A, "average"),
+... }
+>>> resolver = TagResolver(get_series, average=get_average)
+>>> resolver.resolve(specs)
+{
+    "avg_value": 42,
+    "above_average: <pd.Series of bool values, True for points that are above 42, False for others>,
+}
 ```

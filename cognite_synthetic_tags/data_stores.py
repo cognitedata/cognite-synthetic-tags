@@ -73,17 +73,20 @@ def latest_datapoint(
     fillna: Any = None,
 ) -> RetrievalFuncT:
     def _retrieve(tags: Set[str]) -> TagValueStoreResultT:
-        df = retrieve_datapoints_df(
-            client,
-            **{query_by: list(tags)},  # type: ignore
-            start=start,
-            end=end,
-            aggregates=[aggregate] if aggregate else None,
-            granularity=granularity,
-            include_outside_points=include_outside_points,
-            ignore_unknown_ids=ignore_unknown_ids,
-            limit=limit,
-        )
+        if tags:
+            df = retrieve_datapoints_df(
+                client,
+                **{query_by: list(tags)},  # type: ignore
+                start=start,
+                end=end,
+                aggregates=[aggregate] if aggregate else None,
+                granularity=granularity,
+                include_outside_points=include_outside_points,
+                ignore_unknown_ids=ignore_unknown_ids,
+                limit=limit,
+            )
+        else:
+            df = pd.DataFrame({})
         if df.empty:
             # ensure that the key is present in the response dict:
             df.loc[start, :] = [np.nan] * len(df.columns)
@@ -116,17 +119,20 @@ def series(
     fillna: Any = None,
 ) -> RetrievalFuncT:
     def _retrieve(tags: Set[str]) -> TagValueStoreResultT:
-        df = retrieve_datapoints_df(
-            client,
-            **{query_by: list(tags)},  # type: ignore
-            start=start,
-            end=end,
-            aggregates=[aggregate] if aggregate else None,
-            granularity=granularity,
-            include_outside_points=include_outside_points,
-            ignore_unknown_ids=ignore_unknown_ids,
-            limit=limit,
-        )
+        if tags:
+            df = retrieve_datapoints_df(
+                client,
+                **{query_by: list(tags)},  # type: ignore
+                start=start,
+                end=end,
+                aggregates=[aggregate] if aggregate else None,
+                granularity=granularity,
+                include_outside_points=include_outside_points,
+                ignore_unknown_ids=ignore_unknown_ids,
+                limit=limit,
+            )
+        else:
+            df = pd.DataFrame({})
         if ffill:
             df = df.ffill()
         if fillna is not None:

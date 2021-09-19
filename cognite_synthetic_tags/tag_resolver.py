@@ -81,6 +81,11 @@ class TagResolver:
             self._real_tags[store_key] -= set(literals.keys())
 
         self.context.update(literals)
+        # remove known values from query (caching, basically):
+        for store_key, store_tags in self._real_tags.items():
+            known_tags = store_tags & set(self.context.keys())
+            self._real_tags[store_key] -= known_tags
+
         # fetch all the data from CDF:
         for store_key, store_tags in self._real_tags.items():
             values, index = self.value_stores[store_key](store_tags)
@@ -94,6 +99,8 @@ class TagResolver:
                 self.context.update(
                     {"__dummy_series__": pd.Series({}, index=index)}
                 )
+        # TODO probably don't want to serialize the entire context now that we
+        #   have support for multiple stores!
         series_or_values, _ = self._make_series(list(self.context.values()))
         self.context = dict(zip(self.context.keys(), series_or_values))
         if "__dummy_series__" in self.context:

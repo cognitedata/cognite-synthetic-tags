@@ -1,8 +1,9 @@
 import math
+from unittest.mock import patch
 
 import pandas as pd
 
-from cognite_synthetic_tags import Tag, TagResolver
+from cognite_synthetic_tags import Tag, TagResolver, latest_datapoint
 
 from ._utils import *  # noqa
 
@@ -730,3 +731,33 @@ def test_multiple_data_stores_same_tag2(value_store, another_value_store):
         "sumitall": 5,
     }
     assert value == expected
+
+
+def test_reuse_known_tags():
+    specs = {
+        "value_2": Tag("A2"),
+    }
+
+    def retrieve(tags):
+        return latest_datapoint(
+            client="mock_client",
+            start="mock_start",
+            end="mock_end",
+        )(tags)
+
+    with patch(
+        "cognite_synthetic_tags.data_stores.retrieve_datapoints_df"
+    ) as p_retrieve_dp_df:
+        p_retrieve_dp_df.return_value = pd.DataFrame({"A2": 2}, index=[0])
+        resolver = TagResolver(retrieve)
+        value = resolver.resolve(specs)
+
+        assert value == {"value_2": 2}
+        assert p_retrieve_dp_df.call_count == 1
+
+        specs2 = {"value_22": Tag("A2") * 11}
+        value2 = resolver.resolve(specs2)
+        p_retrieve_dp_df.return_value = 22
+
+        assert value2 == {"value_22": 22}
+        assert p_retrieve_dp_df.call_count == 1  # no new calls!

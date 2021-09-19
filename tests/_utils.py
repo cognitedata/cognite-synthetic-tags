@@ -1,4 +1,3 @@
-import re
 from typing import Iterable
 
 import pandas as pd
@@ -26,7 +25,7 @@ def dummy_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
     """
     result: TagResolverContextT = {}
     for tag_name in tag_names:
-        value = int(''.join(dig for dig in tag_name if dig.isdigit()))
+        value = int("".join(dig for dig in tag_name if dig.isdigit()))
         result[tag_name] = value
     return result, None
 
@@ -41,7 +40,7 @@ def dummy_another_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
     """
     result: TagResolverContextT = {}
     for tag_name in tag_names:
-        value = int(''.join(dig for dig in tag_name if dig.isdigit()))
+        value = int("".join(dig for dig in tag_name if dig.isdigit()))
         result[tag_name] = value * 1111
     return result, None
 
@@ -57,7 +56,7 @@ def dummy_series_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
     """
     result: TagResolverContextT = {}
     for tag_name in tag_names:
-        start_value = int(''.join(dig for dig in tag_name if dig.isdigit()))
+        start_value = int("".join(dig for dig in tag_name if dig.isdigit()))
         values = [start_value + i for i in range(7)]
         values = [val - 100 if val >= 100 else val for val in values]
         result[tag_name] = pd.Series(values)
@@ -77,7 +76,8 @@ def another_value_store(mocker):
     from . import _utils
 
     dummy_another_value_store_spy = mocker.spy(
-        _utils, "dummy_another_value_store")
+        _utils, "dummy_another_value_store"
+    )
     return dummy_another_value_store_spy
 
 
