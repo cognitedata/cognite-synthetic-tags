@@ -19,6 +19,15 @@ def test_tag_str_with_infix_operator():
     assert value == expected
 
 
+def test_tag_str_with_infix_operator2():
+    tag = Tag("A2") & Tag("B3")
+
+    value = str(tag)
+
+    expected = "([A2] and [B3])"
+    assert value == expected
+
+
 def test_tag_str_with_prefix_operator():
     tag = ~Tag("A2")
 

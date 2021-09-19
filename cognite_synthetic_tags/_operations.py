@@ -41,9 +41,9 @@ INFIX_OPERATORS = (
     "//",
     "%",
     "**",
-    "and"
-    "or"
-    "xor"
+    "and",
+    "or",
+    "xor",
     "gt",
     "ge",
     "lt",
