@@ -4,7 +4,7 @@ import operator
 from typing import Callable, Dict
 
 # https://docs.python.org/3/library/operator.html
-default_operations: Dict[str, Callable] = {
+DEFAULT_OPERATIONS: Dict[str, Callable] = {
     # binary:
     "+": operator.add,
     "-": operator.sub,

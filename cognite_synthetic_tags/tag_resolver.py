@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 import pandas as pd
 
 from . import Tag
-from ._operations import default_operations
+from ._operations import DEFAULT_OPERATIONS
 from .types import (
     OperationT,
     TagFormulaT,
@@ -54,7 +54,7 @@ class TagResolver:
             self._default_store_key: value_store,
             **additional_stores,
         }
-        self.operations = default_operations.copy()
+        self.operations = DEFAULT_OPERATIONS.copy()
         self.operations.update(additional_operations or {})
         self._real_tags: Dict[str, Set[str]] = {}
         self._recursive_tags: List[Set[str]] = [set()]
