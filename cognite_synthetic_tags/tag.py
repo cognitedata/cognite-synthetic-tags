@@ -55,13 +55,16 @@ class Tag:
         return self.calc("**", other)
 
     def __or__(self, other: Any) -> Tag:
-        return self.calc("|", other)  # bitwise
+        return self.calc("or", other)  # bitwise |
 
     def __and__(self, other: Any) -> Tag:
-        return self.calc("&", other)  # bitwise
+        return self.calc("and", other)  # bitwise &
 
     def __xor__(self, other: Any) -> Tag:
-        return self.calc("^", other)  # bitwise
+        return self.calc("xor", other)  # bitwise ^
+
+    def __invert__(self) -> Tag:
+        return self.calc("not")  # bitwise ~
 
     def __gt__(self, other: Any) -> Tag:
         return self.calc("gt", other)
@@ -113,6 +116,33 @@ class Tag:
     def __rxor__(self, other: Any) -> Tag:
         return self.calc("r^", other)  # bitwise
 
+    def __bool__(self):
+        """
+        To prevent Python fro short-circuiting logic operations, Tag does not
+        support casting to boolean.
+
+        For example:
+          specs = {"status": Tag("A") or Tag("B")}
+        Here the value of specs["status"] will always be Tag("A"). This happens
+        be there is a chance to resolve the specs (i.e. the short-circuiting
+        happens on the line of code in the example).
+        """
+        raise ValueError(
+            "Tag instances do not support boolean operators ('and', 'or')."
+            " Instead, use '&' and '|'."
+            "\nThere are many ways to get this error, some include:"
+            "\n  wrong: Tag(A) or Tag(B)"
+            "\n    fix: Tag(A) | Tag(B)"
+            "\n  wrong: Tag(A) and Tag(B)"
+            "\n    fix: Tag(A) & Tag(B)"
+            "\n  wrong: 1 < Tag(A) < 2"
+            "\n    fix: (1 <Tag(A)) & (Tag(A) < 2)"
+            "\n  wrong: 1 < Tag(A) | 2 < Tag(B)"
+            "\n    fix: (1 <Tag(A)) | (2 < Tag(B))"
+            "\n  wrong: bool(Tag(A))"
+            "\n    fix: Tag(A).bool()"
+        )
+
     # misc
 
     def reciprocal(self) -> Tag:
@@ -125,6 +155,10 @@ class Tag:
     @classmethod
     def or_(cls, tag: Tag, other: Tag) -> Tag:
         return tag.calc("or", other)
+
+    @classmethod
+    def xor_(cls, tag: Tag, other: Tag) -> Tag:
+        return tag.calc("xor", other)
 
     @classmethod
     def not_(cls, tag: Tag) -> Tag:

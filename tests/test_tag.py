@@ -68,3 +68,48 @@ def test_tag_str_calc_with_literal_function():
 
     expected = "foobar([A2])"
     assert value == expected
+
+
+def test_tag_bool_wrong_bool():
+    try:
+        bool(Tag("A3"))
+    except ValueError as exc:
+        exc.args[0].startswith("Tag instances do not support boolean operators")
+    else:
+        assert False, "Expected ValueError not raised!"
+
+
+def test_tag_bool_wrong_and():
+    try:
+        Tag("A3") and Tag("A4")
+    except ValueError as exc:
+        exc.args[0].startswith("Tag instances do not support boolean operators")
+    else:
+        assert False, "Expected ValueError not raised!"
+
+
+def test_tag_bool_wrong_or():
+    try:
+        Tag("A3") or Tag("A4")
+    except ValueError as exc:
+        exc.args[0].startswith("Tag instances do not support boolean operators")
+    else:
+        assert False, "Expected ValueError not raised!"
+
+
+def test_tag_bool_wrong_chained_comparison():
+    try:
+        1 < Tag("A3") < 5
+    except ValueError as exc:
+        exc.args[0].startswith("Tag instances do not support boolean operators")
+    else:
+        assert False, "Expected ValueError not raised!"
+
+
+def test_tag_bool_wrong_precedence():
+    try:
+        Tag("A3") < 5 & Tag("B2") > 7
+    except ValueError as exc:
+        exc.args[0].startswith("Tag instances do not support boolean operators")
+    else:
+        assert False, "Expected ValueError not raised!"

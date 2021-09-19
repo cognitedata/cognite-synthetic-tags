@@ -14,14 +14,12 @@ default_operations: Dict[str, Callable] = {
     "//": operator.floordiv,
     "%": operator.mod,
     "**": operator.pow,
-    "|": operator.or_,
-    "&": operator.and_,
-    "^": operator.xor,
-    # boolean logic:
-    "and": lambda a, b: a and b,
-    "or": lambda a, b: a or b,
-    "bool": lambda a: bool(a),
-    "not": lambda a: not bool(a),
+    # boolean logic (using bitwise operators):
+    "and": lambda a, b: bool(a) and bool(b),  # &
+    "or": lambda a, b: bool(a) or bool(b),  # |
+    "xor": lambda a, b: bool(a) != bool(b),  # ^
+    "not": lambda a: not bool(a),  # ~
+    "bool": lambda a: bool(a),  # no bitwise operator, only Tag.bool()
     # comparisons:
     "gt": lambda a, b: a > b,
     "ge": lambda a, b: a >= b,
@@ -41,7 +39,6 @@ default_operations: Dict[str, Callable] = {
     "floor": math.floor,
     # misc:
     "r**": lambda a, b: b ** a,
-    "r^": lambda a, b: b ^ a,
     "r%": lambda a, b: b % a,
     "r//": lambda a, b: b // a,
     "recip": lambda a: 1.0 / a,

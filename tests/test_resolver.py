@@ -153,44 +153,48 @@ def test_boolean_operators(value_store):
     specs = {
         "value_1": Tag.and_(Tag("A2"), Tag("B3")),
         "value_2": Tag.and_(Tag("A0"), Tag("B3")),
-        "value_3": Tag.or_(Tag("A2"), Tag("B3")),
+        "value_3": Tag.or_(Tag("A0"), Tag("B0")),
         "value_4": Tag.or_(Tag("A0"), Tag("B3")),
+        "value_5": Tag.xor_(Tag("A0"), Tag("B3")),
+        "value_6": Tag.xor_(Tag("A2"), Tag("B3")),
+        "value_7": Tag.not_(Tag("A0")),
     }
 
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": 3,
-        "value_2": 0,
-        "value_3": 2,
-        "value_4": 3,
+        "value_1": True,
+        "value_2": False,
+        "value_3": False,
+        "value_4": True,
+        "value_5": True,
+        "value_6": False,
+        "value_7": True,
     }
     assert value == expected
 
 
 def test_bitwise_logic(value_store):
     specs = {
-        "value_1": Tag("A7") & Tag("A3"),
-        "value_2": Tag("A8") & Tag("A3"),
-        "value_3": Tag("A8") | Tag("A1"),
-        "value_4": Tag("A9") | Tag("A1"),
-        "value_5": Tag("A9") ^ Tag("A1"),
-        "value_6": 9 | Tag("A1"),
-        "value_7": 9 ^ Tag("A1"),
-        "value_8": 7 & Tag("A3"),
+        "value_1": Tag("A2") & Tag("B3"),
+        "value_2": Tag("A0") & Tag("B3"),
+        "value_3": Tag("A0") | Tag("B0"),
+        "value_4": Tag("A0") | Tag("B3"),
+        "value_5": Tag("A0") ^ Tag("B3"),
+        "value_6": Tag("A2") ^ Tag("B3"),
+        "value_7": ~Tag("A0"),
     }
 
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": 3,
-        "value_2": 0,
-        "value_3": 9,
-        "value_4": 9,
-        "value_5": 8,
-        "value_6": 9,
-        "value_7": 8,
-        "value_8": 3,
+        "value_1": True,
+        "value_2": False,
+        "value_3": False,
+        "value_4": True,
+        "value_5": True,
+        "value_6": False,
+        "value_7": True,
     }
     assert value == expected
 
@@ -647,6 +651,35 @@ def test_series_empty_specs(series_value_store):
 
     expected = {}
     assert value == expected
+
+
+def test_series_bool(series_value_store):
+    specs = {
+        "value_a": 4 < Tag("A3"),
+        "value_b": Tag("B8") > 12,
+        "a_or_b": (Tag("A3") > 4) | (Tag("B8") > 12),
+    }
+
+    value = TagResolver(series_value_store).resolve(specs)
+
+    index = pd.Index(range(7))
+    expected = {
+        "value_a": pd.Series(
+            [False, False, True, True, True, True, True],
+            index=index,
+        ),
+        "value_b": pd.Series(
+            [False, False, False, False, False, True, True],
+            index=index,
+        ),
+        "a_or_b": pd.Series(
+            [False, False, True, True, True, True, True],
+            index=index,
+        ),
+    }
+    assert expected.keys() == value.keys() and all(
+        all(value[key] == expected[key]) for key in expected
+    )
 
 
 def test_multiple_data_stores(value_store, another_value_store):
