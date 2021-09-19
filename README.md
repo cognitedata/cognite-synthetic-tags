@@ -473,7 +473,7 @@ For single-value responses, the DataFrame will have a single row, and the call r
 0       30.95        19.1       20.05             30.95                0.441512
 ```
 
-### Mulitple Data Stores
+### Multiple Data Stores
 
 ``` python
 >>> specs = {
@@ -487,3 +487,10 @@ For single-value responses, the DataFrame will have a single row, and the call r
     "above_average: <pd.Series of bool values, True for points that are above 42, False for others>,
 }
 ```
+
+Responses with mixed single-value adn multi-value items can also be passed into `pd.DataFrame` constructor. Pandas 
+will automatically repeat any single-value items across all rows in the new dataframe.
+
+If using multiple data store function, the results will likely have different indexes. `pd.DataFrame` constructor will
+create a new dataframe with a combined index. This can result in a sparsely filled dataframe (many cells having `np.nan`
+value).
