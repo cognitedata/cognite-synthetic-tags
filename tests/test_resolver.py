@@ -724,8 +724,8 @@ def test_reuse_known_tags():
     def retrieve(tags):
         return latest_datapoint(
             client="mock_client",
-            start="mock_start",
-            end="mock_end",
+            at_time="mock_end",
+            lookbehind_start_time="mock_start",
         )(tags)
 
     with patch(

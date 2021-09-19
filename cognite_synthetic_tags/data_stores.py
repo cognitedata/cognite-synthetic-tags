@@ -3,15 +3,13 @@ from typing import Any, List, Literal, Optional, Set
 import numpy as np
 import pandas as pd
 from cognite.client import CogniteClient
+from cognite.client.utils._time import granularity_to_ms, timestamp_to_ms
 
 from cognite_synthetic_tags.types import (
     CogniteTimeT,
     RetrievalFuncT,
     TagValueStoreResultT,
 )
-
-DEFAULT_LIMIT = 10
-
 
 __all__ = [
     "retrieve_datapoints_df",
@@ -61,34 +59,55 @@ def retrieve_datapoints_df(
 
 def latest_datapoint(
     client: CogniteClient,
-    start: CogniteTimeT,
-    end: CogniteTimeT,
+    at_time: CogniteTimeT,
+    lookbehind_start_time: Optional[CogniteTimeT] = None,
     aggregate: Optional[str] = None,
     granularity: Optional[str] = None,
+    lookbehind_limit: Optional[int] = None,
     include_outside_points: bool = None,
-    limit: int = DEFAULT_LIMIT,
     query_by: Literal["id", "external_id"] = "id",
     ignore_unknown_ids: bool = True,
     ffill: bool = True,
     fillna: Any = None,
 ) -> RetrievalFuncT:
+
+    if lookbehind_start_time is None and lookbehind_limit is None:
+        raise ValueError(
+            "Specify either lookbehind_start_time or lookbehind_limit."
+        )
+    if lookbehind_start_time is not None and lookbehind_limit is not None:
+        raise ValueError(
+            "Specify either lookbehind_start_time or lookbehind_limit,"
+            " not both."
+        )
+    if lookbehind_limit is not None and aggregate is None:
+        raise ValueError("Specify aggregate with lookbehind_start.")
+    if lookbehind_limit is not None and granularity is None:
+        raise ValueError("Specify granularity with lookbehind_start.")
+
+    if lookbehind_start_time is not None:
+        start = lookbehind_start_time
+    else:
+        lookbehind_ms = lookbehind_limit * granularity_to_ms(granularity)
+        start = timestamp_to_ms(at_time) - lookbehind_ms
+
     def _retrieve(tags: Set[str]) -> TagValueStoreResultT:
         if tags:
             df = retrieve_datapoints_df(
                 client,
                 **{query_by: list(tags)},  # type: ignore
                 start=start,
-                end=end,
+                end=at_time,
                 aggregates=[aggregate] if aggregate else None,
                 granularity=granularity,
                 include_outside_points=include_outside_points,
                 ignore_unknown_ids=ignore_unknown_ids,
-                limit=limit,
+                limit=None,
             )
         else:
             df = pd.DataFrame({})
         if df.empty:
-            # ensure that the key is present in the response dict:
+            # ensure that all keys are present in the response dict:
             df.loc[start, :] = [np.nan] * len(df.columns)
         if ffill:
             df = df.ffill()

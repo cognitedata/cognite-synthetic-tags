@@ -42,8 +42,8 @@ def test_latest_aggregate(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-03T00:00:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-03T00:00:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"),
         aggregate="average",
         granularity="1d",
         fillna=0,
@@ -60,8 +60,8 @@ def test_latest_value(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
     )
 
     value, index = store({"houston.ro.REMOTE_AI[22]"})
@@ -75,8 +75,8 @@ def test_missing_tags_filled(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
     )
 
     value, index = store({"houston.ro.REMOTE_AI[22]", "FOO.bar"})
@@ -90,8 +90,8 @@ def test_missing_tags_fill_with(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
         fillna=special_value,
     )
 
@@ -105,8 +105,8 @@ def test_no_ffill(mocked_client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start="whatever, using patched data store",
-        end="whatever, using patched data store",
+        at_time="whatever, using patched client",
+        lookbehind_start_time="whatever, using patched client",
         ffill=False,
     )
 
@@ -121,8 +121,8 @@ def test_no_ffill_filna_value(mocked_client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start="whatever, using patched data store",
-        end="whatever, using patched data store",
+        at_time="whatever, using patched client",
+        lookbehind_start_time="whatever, using patched client",
         ffill=False,
         fillna=special_value,
     )
@@ -137,8 +137,8 @@ def test_unknown_tag_tollerate(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
     )
 
     value, index = store({"FOO.bar"})
@@ -152,8 +152,8 @@ def test_unknown_tag_tollerate_with_fillna_value(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
         fillna=special_value,
     )
 
@@ -167,8 +167,8 @@ def test_unknown_tag_dont_tollerate(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
         ignore_unknown_ids=False,
     )
 
@@ -184,8 +184,8 @@ def test_empty(client):
     store = data_stores.latest_datapoint(
         client,
         query_by="external_id",
-        start=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
-        end=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        at_time=datetime.strptime("2020-01-01T00:01:00", "%Y-%m-%dT%H:%M:%S"),
+        lookbehind_start_time=datetime.strptime("2020-01-01T00:00:50", "%Y-%m-%dT%H:%M:%S"),
         ignore_unknown_ids=False,
     )
 
