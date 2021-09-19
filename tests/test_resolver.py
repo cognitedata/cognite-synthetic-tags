@@ -571,14 +571,11 @@ def test_series_index_and_literals(series_value_store):
     value = TagResolver(series_value_store).resolve(specs)
 
     expected = {
-        "lit": pd.Series([100 for _ in range(7)]),
+        "lit": 100,
         "calc": pd.Series([100 * (i + 1) for i in range(7)]),
     }
-    assert expected.keys() == value.keys() and all(
-        all(value[key] == expected[key]) for key in expected
-    )
-    assert all(value["lit"].index == value["calc"].index)
-    assert len(value["lit"].index) == 7
+    assert all(value["calc"] == expected["calc"])
+    assert value["lit"] == expected["lit"]
 
 
 def test_series_only_literals(series_value_store):
@@ -590,14 +587,11 @@ def test_series_only_literals(series_value_store):
     value = TagResolver(series_value_store).resolve(specs)
 
     expected = {
-        "lit1": pd.Series([11] * 7, index=pd.Index(range(7))),
-        "lit2": pd.Series([22] * 7, index=pd.Index(range(7))),
+        "lit1": 11,
+        "lit2": 22,
     }
 
-    assert expected.keys() == value.keys() and all(
-        all(value[key] == expected[key]) for key in expected
-    )
-    assert len(value["lit1"].index) == 7
+    assert value == expected
 
 
 def test_series_empty_specs(series_value_store):

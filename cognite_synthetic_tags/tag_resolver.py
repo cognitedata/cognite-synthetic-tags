@@ -96,17 +96,13 @@ class TagResolver:
                     )
             self.context.update(values)
             if index is not None:
-                self.context.update(
-                    {"__dummy_series__": pd.Series({}, index=index)}
-                )
-        # TODO probably don't want to serialize the entire context now that we
-        #   have support for multiple stores!
-        series_or_values, _ = self._make_series(list(self.context.values()))
-        self.context = dict(zip(self.context.keys(), series_or_values))
-        if "__dummy_series__" in self.context:
-            # TODO yeah, it's a magical string...
-            del self.context["__dummy_series__"]
-
+                values["__dummy_series__"] = pd.Series({}, index=index)
+                # TODO ^^ Yeah, it's a magic string.
+                series_or_values, _ = self._make_series(
+                    list(values.values()))
+                values = dict(zip(values.keys(), series_or_values))
+                del values["__dummy_series__"]
+            self.context.update(values)
         # perform calculations according to tag specs
         result = {}
         for key, tag in specs.items():
