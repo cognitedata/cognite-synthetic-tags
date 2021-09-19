@@ -64,7 +64,7 @@ unicode_backport = ["unicodedata2"]
 
 [[package]]
 name = "cognite-sdk"
-version = "2.26.0"
+version = "2.31.0"
 description = "Client library for Cognite Data Fusion (CDF)"
 category = "main"
 optional = false
@@ -498,8 +498,8 @@ charset-normalizer = [
     {file = "charset_normalizer-2.0.3-py3-none-any.whl", hash = "sha256:88fce3fa5b1a84fdcb3f603d889f723d1dd89b26059d0123ca435570e848d5e1"},
 ]
 cognite-sdk = [
-    {file = "cognite-sdk-2.26.0.tar.gz", hash = "sha256:2bb30b76446452f1c471153b314d03e5022fb29ffac199d61efbeb79e8cd8109"},
-    {file = "cognite_sdk-2.26.0-py3-none-any.whl", hash = "sha256:25ead3678484875655f965431b75a5d84f92c14abcc93ee14a2941c5167db0a4"},
+    {file = "cognite-sdk-2.31.0.tar.gz", hash = "sha256:500262a76c430b93fa92c4e20283eadfbdfd18e02d1d324fc1e2e9f03aea04a7"},
+    {file = "cognite_sdk-2.31.0-py3-none-any.whl", hash = "sha256:f413b645ac53a74762b44e3fc2215a782794eb2662ac5147cfdde271b033909d"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
