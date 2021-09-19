@@ -98,6 +98,47 @@ It is also possible to use functions that take multiple values:
 }
 ```
 
+#### Passing Functions to `calc` and `call`
+
+In addition to using the extension dict, it is also possible pass functions directly.
+
+``` python
+>>> def galons_per_minute(val):
+...    return val * 4.40287
+
+>>> specs = {
+...     "flow_in_sm3_per_hour": Tag("FLOW_METER.123"),
+...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc(galons_per_minute),
+... }
+>>> TagResolver(retrival_function).resolve(specs)
+{
+    "flow_in_sm3_per_hour": 12.3456,
+    "flow_in_galons_per_minute": 54.35604149,
+}
+```
+
+
+``` python
+>>> def closest_to_42(*vals):
+...     """Return whichever value in `vals` is closest to 42"""
+...     deltas = [abs(42 - val) for val in vals]
+...     return vals[deltas.index(min(deltas))]
+
+>>> specs = {
+...     "value_1": Tag("METER_A"),
+...     "value_2": Tag("METER_B"),
+...     "value_3": Tag("METER_C"),
+...     "answer_to_everything": Tag.call(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
+... }
+>>> TagResolver(retrival_function, my_extension).resolve(specs)
+{
+    "value_1": 11,
+    "value_2": 44,
+    "value_3": 57,
+    "answer_to_everything": 44,
+}
+```
+
 ### Caching and Combined API Calls
 
 Any call to `TagResolver.resolve` will result in only one call to the API that retrieves all needed values.
