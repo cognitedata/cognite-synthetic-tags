@@ -100,35 +100,6 @@ def test_more_arithmetic_operations(value_store):
     assert value == expected
 
 
-def test_math_functions(value_store):
-    specs = {
-        "value_1": Tag.sin(Tag("A2")),
-        "value_2": Tag.ceil(Tag("A11") / 2),
-        "value_3": Tag.floor(Tag("A11") / 2),
-        "value_4": Tag.log10(Tag("X100")),
-        "value_5": Tag.log(Tag("X64"), Tag("B4")),
-        "value_6": Tag.cos(Tag("P0")),
-        "value_7": Tag.tan(Tag("P1")),
-        "value_8": Tag.log2(Tag("X16")),
-        "value_9": Tag.sqrt(Tag("X9")),
-    }
-
-    value = TagResolver(value_store).resolve(specs)
-
-    expected = {
-        "value_1": math.sin(2),
-        "value_2": math.ceil(11 / 2),
-        "value_3": math.floor(11 / 2),
-        "value_4": math.log10(100),
-        "value_5": math.log(64, 4),
-        "value_6": math.cos(0),
-        "value_7": math.tan(1),
-        "value_8": math.log2(16),
-        "value_9": math.sqrt(9),
-    }
-    assert value == expected
-
-
 def test_boolean_logic(value_store):
     specs = {
         "value_1": Tag.bool(Tag("A2")),
@@ -585,21 +556,6 @@ def test_series_math_stuff(series_value_store):
         "A3_combined": pd.Series([98, 98, -2, -2, -2, -2, -2]),
         "A20_tenfold": pd.Series([200, 210, 220, 230, 240, 250, 260]),
         "A30_even": pd.Series([True, False, True, False, True, False, True]),
-    }
-    assert expected.keys() == value.keys() and all(
-        all(value[key] == expected[key]) for key in expected
-    )
-
-
-def test_series_trig(series_value_store):
-    specs = {
-        "sin_of_A0": Tag.sin(Tag("A0")),
-    }
-
-    value = TagResolver(series_value_store).resolve(specs)
-
-    expected = {
-        "sin_of_A0": pd.Series([math.sin(i) for i in range(7)]),
     }
     assert expected.keys() == value.keys() and all(
         all(value[key] == expected[key]) for key in expected

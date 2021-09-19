@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import operator
 from typing import Callable, Dict
 
@@ -27,16 +26,6 @@ default_operations: Dict[str, Callable] = {
     "le": lambda a, b: a <= b,
     "eq": lambda a, b: a == b,
     "ne": lambda a, b: a != b,
-    # math module:
-    "sin": math.sin,
-    "cos": math.cos,
-    "tan": math.tan,
-    "sqrt": math.sqrt,
-    "log10": math.log10,
-    "log2": math.log2,
-    "log": math.log,
-    "ceil": math.ceil,
-    "floor": math.floor,
     # misc:
     "r**": lambda a, b: b ** a,
     "r%": lambda a, b: b % a,

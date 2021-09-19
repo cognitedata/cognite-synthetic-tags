@@ -168,38 +168,3 @@ class Tag:
     def bool(cls, tag: Tag) -> Tag:
         return tag.calc("bool")
 
-    @classmethod
-    def sin(cls, tag: Tag) -> Tag:
-        return tag.calc("sin")
-
-    @classmethod
-    def cos(cls, tag: Tag) -> Tag:
-        return tag.calc("cos")
-
-    @classmethod
-    def tan(cls, tag: Tag) -> Tag:
-        return tag.calc("tan")
-
-    @classmethod
-    def log2(cls, tag: Tag) -> Tag:
-        return tag.calc("log2")
-
-    @classmethod
-    def sqrt(cls, tag: Tag) -> Tag:
-        return tag.calc("sqrt")
-
-    @classmethod
-    def log10(cls, tag: Tag) -> Tag:
-        return tag.calc("log10")
-
-    @classmethod
-    def log(cls, tag: Tag, *args) -> Tag:
-        return tag.calc("log", *args)
-
-    @classmethod
-    def ceil(cls, tag: Tag) -> Tag:
-        return tag.calc("ceil")
-
-    @classmethod
-    def floor(cls, tag: Tag) -> Tag:
-        return tag.calc("floor")
