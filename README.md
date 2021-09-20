@@ -59,53 +59,15 @@ and math operations are performed.
 ### Extendability
 
 Easily extendable with additional function calls and / or math operations.
-`TagResolver` takes a second argument, `additional_operation`, a dict with callables that can be used in expressions:
 
-``` python
->>> my_extension = {"galons_per_minute": lambda val: val * 4.40287}
->>> specs = {
-...     "flow_in_sm3_per_hour": Tag("FLOW_METER.123"),
-...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc("galons_per_minute"),
-... }
->>> TagResolver(retrival_function, my_extension).resolve(specs)
-{
-    "flow_in_sm3_per_hour": 12.3456,
-    "flow_in_galons_per_minute": 54.35604149,
-}
-```
+#### Calculations on a Single Tag
 
-It is also possible to use functions that take multiple values:
-
-``` python
->>> def closest_to_42(*vals):
-...     """Return whichever value in `vals` is closest to 42"""
-...     deltas = [abs(42 - val) for val in vals]
-...     return vals[deltas.index(min(deltas))]
-
->>> my_extension = {"nearest_42": closest_to_42}
->>> specs = {
-...     "value_1": Tag("METER_A"),
-...     "value_2": Tag("METER_B"),
-...     "value_3": Tag("METER_C"),
-...     "answer_to_everything": Tag.call("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
-... }
->>> TagResolver(retrival_function, my_extension).resolve(specs)
-{
-    "value_1": 11,
-    "value_2": 44,
-    "value_3": 57,
-    "answer_to_everything": 44,
-}
-```
-
-#### Passing Functions to `calc` and `call`
-
-In addition to using the extension dict, it is also possible pass functions directly.
+`Tag.calc` method takes a callable which will be applied to the result (element-wise) after the value has been fetched 
+from CDF.
 
 ``` python
 >>> def galons_per_minute(val):
-...    return val * 4.40287
-
+...     return val * 4.40287
 >>> specs = {
 ...     "flow_in_sm3_per_hour": Tag("FLOW_METER.123"),
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc(galons_per_minute),
@@ -117,6 +79,10 @@ In addition to using the extension dict, it is also possible pass functions dire
 }
 ```
 
+#### Calculations with Multiple Tagts
+
+`Tag.call` is a class method that takes a callable and any number of `Tag` instances. When the values are fetched from 
+CDF, the callable will be applied (element-wise) with the tag values passed to it as arguments. 
 
 ``` python
 >>> def closest_to_42(*vals):
@@ -131,6 +97,48 @@ In addition to using the extension dict, it is also possible pass functions dire
 ...     "answer_to_everything": Tag.call(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
 >>> TagResolver(retrival_function, my_extension).resolve(specs)
+{
+    "value_1": 11,
+    "value_2": 44,
+    "value_3": 57,
+    "answer_to_everything": 44,
+}
+```
+
+#### Referencing Functions by Name
+
+Both `calc` and `call` accept a string instead of the callable for their first argument. In this case, the string 
+must match a key in a dict passed to `TagResolver`. This dict contains the actual callables which are then used as
+described above.
+
+This can be used to address issues with importing Python modules.
+
+``` python
+>>> my_extension = {"galons_per_minute": lambda val: return val * 4.40287}
+>>> specs = {
+...     "flow_in_sm3_per_hour": Tag("FLOW_METER.123"),
+...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc("galons_per_minute"),
+... }
+>>> TagResolver(retrival_function, my_extension).resolve(specs)
+{
+    "flow_in_sm3_per_hour": 12.3456,
+    "flow_in_galons_per_minute": 54.35604149,
+}
+```
+
+``` python
+>>> def closest_to_42(*vals):
+...     """Return whichever value in `vals` is closest to 42"""
+...     deltas = [abs(42 - val) for val in vals]
+...     return vals[deltas.index(min(deltas))]
+
+>>> specs = {
+...     "value_1": Tag("METER_A"),
+...     "value_2": Tag("METER_B"),
+...     "value_3": Tag("METER_C"),
+...     "answer_to_everything": Tag.call("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
+... }
+>>> TagResolver(retrival_function, {"nearest_42": closest_to_42}).resolve(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -186,9 +194,9 @@ instead of `resolver.resolve`).
 
 ### Multiple Data Stores
 
-`Tag` class supports specifying a string key for an alternative data store. The corresponding argument has to be present
-in the `TagResolver` constructor call. This allows us to mix and match values from tags obtained from separate CDF API
-calls.
+`Tag` class supports specifying a string key for an alternative data store (a.k.a. the fetch function).
+The corresponding argument has to be present in the `TagResolver` constructor call. This allows us to mix
+and match values from tags obtained from separate CDF API calls.
 
 For example, we can fetch a single average value of a time series and then multiply it with a series of values from
 another time series (or, indeed, the same one if desired):
