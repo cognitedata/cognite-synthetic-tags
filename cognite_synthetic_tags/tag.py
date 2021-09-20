@@ -28,10 +28,13 @@ class Tag:
             oper_str = operator_.__name__
         else:
             oper_str = str(operator_)
+            if oper_str.startswith("r"):
+                args = args[::-1]
         if oper_str in INFIX_OPERATORS:
-            new_tag = Tag(f"([{f'] {oper_str} ['.join(map(str, args))}])")
+            oper_str = INFIX_OPERATORS[oper_str]
+            new_tag = Tag(f"{f' {oper_str} '.join(map(str, args))}")
         else:
-            new_tag = Tag(f"{oper_str}([{'], ['.join(map(str, args))}])")
+            new_tag = Tag(f"{oper_str}({', '.join(map(str, args))})")
         new_tag.formula = (operator_, args)
         return new_tag
 
@@ -59,16 +62,16 @@ class Tag:
         return self.calc("**", other)
 
     def __or__(self, other: Any) -> Tag:
-        return self.calc("or", other)  # bitwise |
+        return self.calc("|", other)
 
     def __and__(self, other: Any) -> Tag:
-        return self.calc("and", other)  # bitwise &
+        return self.calc("&", other)
 
     def __xor__(self, other: Any) -> Tag:
-        return self.calc("xor", other)  # bitwise ^
+        return self.calc("^", other)
 
     def __invert__(self) -> Tag:
-        return self.calc("not")  # bitwise ~
+        return self.calc("not")
 
     def __gt__(self, other: Any) -> Tag:
         return self.calc("gt", other)
@@ -91,16 +94,16 @@ class Tag:
     # reverse binary operations (e.g: 42 + Tag)
 
     def __radd__(self, other: Any) -> Tag:
-        return self.__add__(other)
+        return self.calc("r+", other)
 
     def __rsub__(self, other: Any) -> Tag:
-        return (self * -1) + other
+        return self.calc("r-", other)
 
     def __rmul__(self, other: Any) -> Tag:
-        return self.__mul__(other)
+        return self.calc("r*", other)
 
     def __rtruediv__(self, other: Any) -> Tag:
-        return self.reciprocal().calc("*", other)
+        return self.calc("r/", other)
 
     def __rfloordiv__(self, other: Any) -> Tag:
         return self.calc("r//", other)
@@ -112,17 +115,17 @@ class Tag:
         return self.calc("r**", other)
 
     def __ror__(self, other: Any) -> Tag:
-        return self.__or__(other)  # bitwise
+        return self.calc("r|", other)
 
     def __rand__(self, other: Any) -> Tag:
-        return self.__and__(other)  # bitwise
+        return self.calc("r&", other)
 
     def __rxor__(self, other: Any) -> Tag:
-        return self.calc("r^", other)  # bitwise
+        return self.calc("r^", other)
 
     def __bool__(self):
         """
-        To prevent Python fro short-circuiting logic operations, Tag does not
+        To prevent Python from short-circuiting logic operations, Tag does not
         support casting to boolean.
 
         For example:
@@ -135,40 +138,22 @@ class Tag:
             "Tag instances do not support boolean operators ('and', 'or')."
             " Instead, use '&' and '|'."
             "\nThere are many ways to get this error, some include:"
-            "\n  wrong: Tag(A) or Tag(B)"
+            "\n  error: Tag(A) or Tag(B)"
             "\n    fix: Tag(A) | Tag(B)"
-            "\n  wrong: Tag(A) and Tag(B)"
+            "\n  error: Tag(A) and Tag(B)"
             "\n    fix: Tag(A) & Tag(B)"
-            "\n  wrong: 1 < Tag(A) < 2"
-            "\n    fix: (1 <Tag(A)) & (Tag(A) < 2)"
-            "\n  wrong: 1 < Tag(A) | 2 < Tag(B)"
-            "\n    fix: (1 <Tag(A)) | (2 < Tag(B))"
-            "\n  wrong: bool(Tag(A))"
+            "\n  error: 1 < Tag(A) < 2"
+            "\n    fix: (1 < Tag(A)) & (Tag(A) < 2)"
+            "\n  error: 1 < Tag(A) | 2 < Tag(B)"
+            "\n    fix: (1 < Tag(A)) | (2 < Tag(B))"
+            "\n  error: bool(Tag(A))"
             "\n    fix: Tag(A).bool()"
+            "\n  error: not Tag(A)"
+            "\n    fix: Tag(A).bool_not()"
         )
 
-    # misc
+    def bool(self) -> Tag:
+        return self.calc("bool")
 
-    def reciprocal(self) -> Tag:
-        return self.calc("recip")
-
-    @classmethod
-    def and_(cls, tag: Tag, other: Tag) -> Tag:
-        return tag.calc("and", other)
-
-    @classmethod
-    def or_(cls, tag: Tag, other: Tag) -> Tag:
-        return tag.calc("or", other)
-
-    @classmethod
-    def xor_(cls, tag: Tag, other: Tag) -> Tag:
-        return tag.calc("xor", other)
-
-    @classmethod
-    def not_(cls, tag: Tag) -> Tag:
-        return tag.calc("not")
-
-    @classmethod
-    def bool(cls, tag: Tag) -> Tag:
-        return tag.calc("bool")
-
+    def bool_not(self) -> Tag:
+        return self.calc("not")

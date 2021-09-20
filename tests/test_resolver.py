@@ -1,4 +1,3 @@
-import math
 from unittest.mock import patch
 
 import pandas as pd
@@ -90,7 +89,7 @@ def test_more_arithmetic_operations(value_store):
         "value_1": 5,
         "value_2": 13,
         "value_3": -9,
-        "value_4": 10,
+        "value_4": 10.0,
         "value_5": 9,
         "value_6": 27,
         "value_7": 2,
@@ -100,12 +99,12 @@ def test_more_arithmetic_operations(value_store):
     assert value == expected
 
 
-def test_boolean_logic(value_store):
+def test_bool(value_store):
     specs = {
-        "value_1": Tag.bool(Tag("A2")),
-        "value_2": Tag.bool(Tag("A0")),
-        "value_3": Tag.not_(Tag("A3")),
-        "value_4": Tag.not_(Tag("A0")),
+        "value_1": Tag("A2").bool(),
+        "value_2": Tag("A0").bool(),
+        "value_3": Tag("A2").bool_not(),
+        "value_4": Tag("A0").bool_not(),
     }
 
     value = TagResolver(value_store).resolve(specs)
@@ -121,31 +120,6 @@ def test_boolean_logic(value_store):
 
 
 def test_boolean_operators(value_store):
-    specs = {
-        "value_1": Tag.and_(Tag("A2"), Tag("B3")),
-        "value_2": Tag.and_(Tag("A0"), Tag("B3")),
-        "value_3": Tag.or_(Tag("A0"), Tag("B0")),
-        "value_4": Tag.or_(Tag("A0"), Tag("B3")),
-        "value_5": Tag.xor_(Tag("A0"), Tag("B3")),
-        "value_6": Tag.xor_(Tag("A2"), Tag("B3")),
-        "value_7": Tag.not_(Tag("A0")),
-    }
-
-    value = TagResolver(value_store).resolve(specs)
-
-    expected = {
-        "value_1": True,
-        "value_2": False,
-        "value_3": False,
-        "value_4": True,
-        "value_5": True,
-        "value_6": False,
-        "value_7": True,
-    }
-    assert value == expected
-
-
-def test_bitwise_logic(value_store):
     specs = {
         "value_1": Tag("A2") & Tag("B3"),
         "value_2": Tag("A0") & Tag("B3"),

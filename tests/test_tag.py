@@ -15,7 +15,7 @@ def test_tag_str_with_infix_operator():
 
     value = str(tag)
 
-    expected = "([A2] * [B3])"
+    expected = "A2 × B3"
     assert value == expected
 
 
@@ -24,7 +24,7 @@ def test_tag_str_with_infix_operator2():
 
     value = str(tag)
 
-    expected = "([A2] and [B3])"
+    expected = "A2 and B3"
     assert value == expected
 
 
@@ -33,7 +33,7 @@ def test_tag_str_with_prefix_operator():
 
     value = str(tag)
 
-    expected = "not([A2])"
+    expected = "not(A2)"
     assert value == expected
 
 
@@ -42,7 +42,7 @@ def test_tag_str_call_with_extension():
 
     value = str(tag)
 
-    expected = "foo([A2], [B3])"
+    expected = "foo(A2, B3)"
     assert value == expected
 
 
@@ -51,7 +51,7 @@ def test_tag_str_call_with_comparison_operator():
 
     value = str(tag)
 
-    expected = "gt([A2], [B3])"
+    expected = "A2 > B3"
     assert value == expected
 
 
@@ -63,7 +63,7 @@ def test_tag_str_call_with_literal_function():
 
     value = str(tag)
 
-    expected = "foobar([A2], [B3])"
+    expected = "foobar(A2, B3)"
     assert value == expected
 
 
@@ -72,7 +72,7 @@ def test_tag_str_calc_with_extension():
 
     value = str(tag)
 
-    expected = "foo([A2])"
+    expected = "foo(A2)"
     assert value == expected
 
 
@@ -84,7 +84,55 @@ def test_tag_str_calc_with_literal_function():
 
     value = str(tag)
 
-    expected = "foobar([A2])"
+    expected = "foobar(A2)"
+    assert value == expected
+
+
+def test_tag_str_calc():
+    tag = Tag("A2") * Tag("B3") + Tag("C4")
+
+    value = str(tag)
+
+    expected = "A2 × B3 + C4"
+    assert value == expected
+
+
+def test_tag_str_calc_foo():
+    def foo(*a):
+        ...
+
+    tag = Tag.call(foo, Tag("A2") * Tag("B3") + 2 * Tag("C4"), Tag("D5")) + 4
+
+    value = str(tag)
+
+    expected = "foo(A2 × B3 + 2 × C4, D5) + 4"
+    assert value == expected
+
+
+def test_tag_str_reverse_oper_add():
+    tag = 2 + Tag("B3")
+
+    value = str(tag)
+
+    expected = "2 + B3"
+    assert value == expected
+
+
+def test_tag_str_reverse_oper_sub():
+    tag = 2 - Tag("B3")
+
+    value = str(tag)
+
+    expected = "2 - B3"
+    assert value == expected
+
+
+def test_tag_str_uft8_ne():
+    tag = 2 != Tag("B3")
+
+    value = str(tag)
+
+    expected = "B3 ≠ 2"  # reversed, can't do much about that
     assert value == expected
 
 
