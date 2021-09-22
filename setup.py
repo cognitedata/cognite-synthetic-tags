@@ -11,7 +11,7 @@ def read(filename):
         return file.read()
 
 
-version = "0.1.0-beta"
+version = "0.2.0"
 if "-dev" in version:
     dev_status = "Development Status :: 3 - Alpha"
 elif "-beta" in version:
