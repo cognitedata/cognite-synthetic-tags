@@ -37,17 +37,13 @@ with something more readable and powerful:
 
 ### Expressive Syntax
 
-`Tag` class is used as a reference for values that are going to be fetched from API.
-
-`TagResolver` is where the actual call to the API happens, and where `Tag` instances are replaces with actual values
-and math operations are performed.
-
 ``` python
 >>> specs = {
 ...     "some_valve": Tag("FOO.123"),
 ...     "another_meter": Tag("BAR-456"),
 ...     "sum_of_2_things": Tag("THING_A") + Tag("THING_B"),
 ... }
+
 >>> TagResolver(retrival_function).resolve(specs)
 {
     "some_valve": 42.0000123,
@@ -56,22 +52,35 @@ and math operations are performed.
 }
 ```
 
+`Tag` class is used as a reference for values that are going to be fetched from API. It "understands" may common algebra
+operations such as:
+ * basic math operations: `total_a_b = Tag("METER_A") + Tag("METER_B")`
+ * parenthesis and literal values: `complicated_calculation = (Tag("METER_C") - 10) / (Tag("METER_D") + TAG("METER_E"))"`
+ * boolean logic: `alert_status = Tag("METER_F") > 42`
+
+
+`TagResolver` is where the actual call to the API happens, and where `Tag` instances are replaced with actual values
+and where math operations are performed.
+
+
 ### Extendability
 
 Easily extendable with additional function calls and / or math operations.
 
 #### Calculations on a Single Tag
 
-`Tag.calc` method takes a callable which will be applied to the result (element-wise) after the value has been fetched 
+`Tag.calc` method takes a callable which will be applied to the result (element-wise) after the value has been fetched
 from CDF.
 
 ``` python
 >>> def galons_per_minute(val):
 ...     return val * 4.40287
+
 >>> specs = {
 ...     "flow_in_sm3_per_hour": Tag("FLOW_METER.123"),
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc(galons_per_minute),
 ... }
+
 >>> TagResolver(retrival_function).resolve(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
@@ -79,10 +88,10 @@ from CDF.
 }
 ```
 
-#### Calculations with Multiple Tagts
+#### Calculations with Multiple Tags
 
-`Tag.call` is a class method that takes a callable and any number of `Tag` instances. When the values are fetched from 
-CDF, the callable will be applied (element-wise) with the tag values passed to it as arguments. 
+`Tag.call` is a class method that takes a callable and any number of `Tag` instances. When the values are fetched from
+CDF, the callable will be applied (element-wise) with the tag values passed to it as arguments.
 
 ``` python
 >>> def closest_to_42(*vals):
@@ -107,18 +116,22 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 
 #### Referencing Functions by Name
 
-Both `calc` and `call` accept a string instead of the callable for their first argument. In this case, the string 
+Both `calc` and `call` accept a string instead of a callable for their first argument. In this case, the string
 must match a key in a dict passed to `TagResolver`. This dict contains the actual callables which are then used as
 described above.
 
-This can be used to address issues with importing Python modules.
+This feature can be used to address issues with importing Python modules.
 
 ``` python
->>> my_extension = {"galons_per_minute": lambda val: return val * 4.40287}
+>>> my_extension = {
+...     "galons_per_minute": lambda val: return val * 4.40287,
+... }
+
 >>> specs = {
 ...     "flow_in_sm3_per_hour": Tag("FLOW_METER.123"),
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc("galons_per_minute"),
 ... }
+
 >>> TagResolver(retrival_function, my_extension).resolve(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
@@ -138,6 +151,7 @@ This can be used to address issues with importing Python modules.
 ...     "value_3": Tag("METER_C"),
 ...     "answer_to_everything": Tag.call("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
+
 >>> TagResolver(retrival_function, {"nearest_42": closest_to_42}).resolve(specs)
 {
     "value_1": 11,
@@ -149,14 +163,15 @@ This can be used to address issues with importing Python modules.
 
 ### Caching and Combined API Calls
 
-Any call to `TagResolver.resolve` will result in only one call to the API that retrieves all needed values.
+Any call to `TagResolver.resolve` will result in the minimum number of calls to the API to retrieves all needed values.
 
 Each instance of `TagResolver` keeps internal cache and only queries the API for tags that are needed.
 
-In the next example, the CDF time series API endpoint is hit only once with a query for 3 time series.
+In the next example with multiple calls to `resolve()`, the CDF time series API endpoint is hit only once.
 
 ``` python
 >>> resolver = TagResolver(retrival_function)
+
 >>> resolver.resolve({
 ...     "value_1": Tag("METER_A"),
 ...     "value_2": Tag("METER_B"),
@@ -166,11 +181,13 @@ In the next example, the CDF time series API endpoint is hit only once with a qu
 ...     "val_1_and_3": Tag("METER_A") + Tag("METER_C"),
 ... })
 {"value_1": 12, "value_2": 23, "value_3": 34, "val_1_and_2": 35, "val_2_and_3": ...}
+
 >>> resolver.resolve({
 ...     "value_1": Tag("METER_A"),
 ...     "val_1_percent": 100 * Tag("METER_A") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
 {"value_1": 12, "value_1_percent": 17,3913043478}
+
 >>> resolver.resolve({
 ...     "value_2": Tag("METER_B"),
 ...     "val_2_percent": 100 * Tag("METER_B") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
@@ -178,18 +195,21 @@ In the next example, the CDF time series API endpoint is hit only once with a qu
 {"value_1": 23, "value_1_percent": 33,3333333333}
 ```
 
-### Multi-value Lookups (Series)
-
-While the primary motivation for **Synthetic Tags** library was to facilitate single-value lookups, as seen in the
-examples above, the library also supports retrieval of multiple datapoints (as `pd.Series`) as well as performing
-element-wise operations on them.
-
 
 #### Avoiding Cache
 
-In case that the caching is not desired (i.e. if we wanted to query the CDF again in each of the three examples above)
-we should create a new instance of `TagResolver` for each example (i.e. use `TagResolver(retrival_function).resolve`
-instead of `resolver.resolve`).
+In case that the caching is not desired (i.e. if we wanted to query the CDF again in each of the three `resolve()`
+calls above) we should create a new instance of `TagResolver` for each one (i.e. use
+`TagResolver(retrival_function).resolve` instead of `resolver.resolve`).
+
+
+### Multi-value Lookups (Series)
+
+While the primary motivation for **Synthetic Tags** library was to facilitate single-value lookups, as seen in the
+examples so far, the library also supports retrieving of multiple datapoints per tag (as `pd.Series`) as well as
+performing element-wise operations on them.
+
+See "Full examples" section below for more examples with Series.
 
 
 ### Multiple Data Stores
@@ -203,32 +223,26 @@ another time series (or, indeed, the same one if desired):
 
 ``` python
 >>> resolver = TagResolver(get_series, average=get_average)
+
 >>> resolver.resolve({
 ...     "avg_value": Tag("METER_A", "average"),
 ...     "above_average": Tag("METER_A") > Tag("METER_A", "average"),
 ... })
 {
     "avg_value": 42,
-    "above_average: <pd.Series of bool values, True for points that are above 42, False for others>,
+    "above_average: <pd.Series... >,  # series of bool values, True for points that are above 42, False for others
 }
 ```
-
 
 Note: All tags using any particular value store are gathered in a single API call, so no matter how many tags there are,
 the number of calls to the CDF API will always be equal to the number of value stores.
 
 There are two caveats to this:
- 1. Any value stores that don't have a any tags are not used, i.e. no calls there.
+ 1. Any value stores that don't have any tags are not used, i.e. no calls there.
  2. For really large number of tags, the CDF SDK might split up a single large query into multiple smaller queries
     that it executes in parallel and then combines the results of. This is an internal implementation detail of
     the Python CDF SDK and does not affect (not is being affected) by **Cognite Synthetic Tags**.
 
-## Limitations
-
-* ~~single-value lookups~~  (implemented)
-* ~~single data store~~  (implemented)
-
-> TODO This is not a perfect library, figure out its limitations & downsides.
 
 
 ## Comparison with Synthetic Time Series API
@@ -248,7 +262,7 @@ Performing the calculations locally means more control and extendability.
 In principle some support for the Synthetic Time Series API could be added to this library. TDB.
 
 
-## Example Uses
+## Full Examples
 
 This section uses data from OpenIndustrialData project.
 
@@ -263,39 +277,37 @@ Get your API key from https://openindustrialdata.com/get-started/
 
 #### Imports and Data Storage Callable
 
-
 ``` python
->>> from cognite_synthetic_tags import latest_datapoint, series, Tag, TagResolver
+>>> from cognite_synthetic_tags import point_at_time, series, Tag, TagResolver
 >>> from cognite.client import CogniteClient
 
 >>> # CONFIGURE FETCHING PARAMS:
 
 >>> client = CogniteClient()
->>> def get_latest(tags):
-...     return latest_datapoint(
-...         client,
-...         query_by="external_id",
-...         start="90d-ago",
-...         end="89d-ago",
-...     )(tags)
+>>> get_latest = point_at_time(
+...     client,
+...     query_by="external_id",
+...     at_time="90d-ago",
+...     lookbehind_start_time="91d-ago",
+... )
 
->>> def get_average(tags):
-...     return latest_datapoint(
-...         client,
-...         query_by="external_id",
-...         start="90d-ago",
-...         end="89d-ago",
-...         aggregate="average",
-...         granularity="1h",
-...     )(tags)
+>>> get_average = point_at_time(
+...     client,
+...     query_by="external_id",
+...     at_time="90d-ago",
+...     lookbehind_limit=10,
+...     aggregate="average",
+...     granularity="1h",
+... )
 
->>> def get_series(tags):
-...     return series(
-...         client,
-...         query_by="external_id",
-...         start="90d-ago",
-...         end="89d-ago",
-...     )(tags)
+>>> get_series = series(
+...     client,
+...     query_by="external_id",
+...     start="91d-ago",
+...     end="90d-ago",
+...     aggregate="average",
+...     granularity="1h",
+... )
 
 >>> # just for readability:
 >>> VALVE_22 = "houston.ro.REMOTE_AI[22]"
@@ -307,19 +319,30 @@ Get your API key from https://openindustrialdata.com/get-started/
 #### Simple Usage
 
 ``` python
-
 >>> # single value (not very useful):
 >>> tag_resolver = TagResolver(get_latest)
 >>> specs = {"valve": Tag(VALVE_22)}
 >>> tag_resolver.resolve(specs)
 {'valve': 0.003925000131130218}
-
+```
+``` python
 >>> # simple multiplication:
 >>> specs = {"valve_percent": 100 * Tag(VALVE_22)}
 >>> tag_resolver.resolve(specs)
 {'valve': 39.25000130113021085}
+```
+``` python
+>>> # apply a function to a value:
+>>> specs = {"valve_percent_int": (100 * Tag(VALVE_22)).calc(round)}
+>>> tag_resolver.resolve(specs)
+{'valve': 39.25000130113021085}
+```
 
+> Notice in the last example we cal `calc` on the result of `100 * Tag(...)`. This works because whenever  a `Tag`
+> instance encounters a math operator, it combines with other operands (the liberal value `100` in this example) to
+> create a new `Tag` instance. We have called `calc` method on this new `Tag` instance.
 
+``` python
 >>> # fetch multiple values in a single API call and also perform some math:
 >>> specs = {
 ...     "pressure_1": Tag(METER_A),
@@ -337,7 +360,6 @@ Get your API key from https://openindustrialdata.com/get-started/
 #### Usage with Series
 
 ``` python
-
 >>> specs = {"valve": Tag(VALVE_22)}
 >>> tag_resolver = TagResolver(get_series)
 >>> tag_resolver.resolve(specs)
@@ -354,7 +376,7 @@ Get your API key from https://openindustrialdata.com/get-started/
           Name: houston.ro.REMOTE_AI[22], dtype: float64,
 }
 ```
-> The value in the output above is an instance of `pandas.Series`, indented for readability.
+> The value under key `"valve"` in the output above is an instance of `pandas.Series`, indented for readability.
 
 ## Advanced Usage
 
@@ -401,8 +423,10 @@ Get your API key from https://openindustrialdata.com/get-started/
 
 ### Operations on Series
 
-This example is intentionally as similar as possible to the previous example. The only difference is the retrieval
-function passed to `TagResolver` (`get_series` in this example vs `get_latest` in the previous one).
+This example below is intentionally as similar as possible to the previous example. The only difference is the retrieval
+function passed to `TagResolver`: `get_series` in this example vs `get_latest` in the previous one.
+
+> See definition of `get_series` and `get_lates` at the start of [Full Examples](#full-examples) section above.
 
 ``` python
 >>> custom_operations = {"max": max, "sum": lambda *vals: sum([*vals])}
@@ -446,7 +470,7 @@ function passed to `TagResolver` (`get_series` in this example vs `get_latest` i
                            dtype: float64,
 }
 ```
-> The value in the output above is an instance of `pandas.Series`, indented and trimmed for readability.
+> The value in the output dicts above are instances of `pandas.Series`, indented and trimmed for readability.
 
 
 ### But, where are the DataFrames?!
@@ -456,7 +480,7 @@ Results from `TagResolver.resolve` can be passed directly to `pd.DataFrame` to g
 This is a natural fit for series results, e.g:
 
 ``` python
->>> # from the previous example...
+>>> # ...continuing from the previous example
 >>> data = tag_resolver.resolve(specs)
 >>> pd.DataFrame(data)
                      pressure_1  pressure_2  pressure_3  pressure_highest  highest_to_total_ratio
@@ -466,7 +490,8 @@ This is a natural fit for series results, e.g:
 ...
 ```
 
-For single-value responses, the DataFrame will have a single row, and the call requires an index as well:
+For single-value responses, the DataFrame will have a single row, and the call to `pd.DataFrames` will require an index
+in addition to the data dict:
 
 ``` python
 >>> data = {   # from a previous example
@@ -476,7 +501,7 @@ For single-value responses, the DataFrame will have a single row, and the call r
 ...     'pressure_highest': 30.95,
 ...     'highest_to_total_ratio': 0.4415121255349501,
 ... }
->>> pd.DataFrame(data, index=[0])
+>>> pd.DataFrame(data, index=[0])  # [0] or any one-element iterable
    pressure_1  pressure_2  pressure_3  pressure_highest  highest_to_total_ratio
 0       30.95        19.1       20.05             30.95                0.441512
 ```
@@ -493,12 +518,90 @@ For single-value responses, the DataFrame will have a single row, and the call r
 {
     "avg_value": 42,
     "above_average: <pd.Series of bool values, True for points that are above 42, False for others>,
+    "positive_difference: <pd.Series of bool values, True for points that are above 42, False for others>,
 }
 ```
 
-Responses with mixed single-value adn multi-value items can also be passed into `pd.DataFrame` constructor. Pandas 
+Responses with mixed single-value adn multi-value items can also be passed into `pd.DataFrame` constructor. Pandas
 will automatically repeat any single-value items across all rows in the new dataframe.
 
 If using multiple data store function, the results will likely have different indexes. `pd.DataFrame` constructor will
 create a new dataframe with a combined index. This can result in a sparsely filled dataframe (many cells having `np.nan`
 value).
+
+#### More complex example
+
+To expand on the previous example, let us require the difference between average value and any actual value, but
+only if the value is above average, otherwise set it to 0. For example, this is a dataframe that we want to get:
+```
+                          value   avg_value   above_average  positive_diff
+2021-06-16 17:42:10       49.65       43.21            True        6.43999
+2021-06-16 17:42:20       44.85       43.21            True        1.64000
+2021-06-16 17:42:30       41.50       43.21           False              0
+2021-06-16 17:42:40       40.90       43.21           False              0
+2021-06-16 17:42:50       41.50       43.21           False              0
+2021-06-16 17:42:60       43.30       43.21            True       0.089999
+...
+```
+
+There are many ways to get this result, here are a few equivalent ones.
+
+``` python
+specs = {
+   "value": Tag(METER_A),
+   "avg_value": Tag(METER_A, "average"),
+   "above_average": Tag(METER_A) > Tag(METER_A, "average"),
+   "positive_diff": (Tag(METER_A) - Tag(METER_A, "average")) if Tag(METER_A) > Tag(METER_A, "average") else 0,
+}
+```
+
+``` python
+def positive_or_0(val):
+    return val if val > 0 else 0
+
+specs = {
+   "value": Tag(METER_A),
+   "avg_value": Tag(METER_A, "average"),
+   "above_average": Tag(METER_A) > Tag(METER_A, "average"),
+   "positive_diff": (Tag(METER_A) - Tag(METER_A, "average")).calc(positive_or_0),
+}
+```
+
+``` python
+avg_spec = Tag(METER_A, "average")
+meter_spec = Tag(METER_A)
+above_spec = meter_spec > avg_spec
+diff_spec = meter_spec - avg_spec
+positive_diff_spec = diff_spec if above_spec else 0
+
+specs = {
+   "value": meter_spec,
+   "avg_value": avg_spec,
+   "above_average": above_spec,
+   "positive_diff": positive_diff_spec,
+}
+```
+
+
+## Provided Data Stores
+
+All examples in this document use data stores (a.k.a. retrieval functions) that are provided in
+`cognite_synthetic_tags.data_stores` module. These are prepared to work with `TagResolver`.
+
+Provided stores:
+ * `series` - returns multiple values for every tag, as `pd.Series` instances.
+ * `point` - same as `series` except that it returns only the last point in each series.
+ * `series_at_time` - same as `series` except it takes `at_time` and `lookbehind_start_time` as an alternative
+    to `end` and `start` arguments.
+ * `point_at_time` - same as  `point` except it takes `at_time` and `lookbehind_start_time` as an alternative
+    to `end` and `start` arguments.
+
+Check docstrings for more details.
+
+
+## TODO
+
+ * Add better support for passing lambdas to `calc` an `call`, e.g. `Tag(..).calc(some_value=lambda val: val + 42)`
+ * Internally **Synthetic Tags** is using `DataFrame` and `Series` from Pandas. There is a small performance penalty
+   associated with this, so we should probably make the effort to work directly with response objects from Cognite SDK.
+ * Check the effects of `include_outside_points` on the provided data store functions.

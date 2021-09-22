@@ -2,9 +2,9 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from cognite_synthetic_tags import Tag, TagResolver, latest_datapoint
+from cognite_synthetic_tags import Tag, TagResolver, point_at_time
 
-from ._utils import *  # noqa
+from .utils import *  # noqa
 
 
 def test_regular_tag(value_store):
@@ -545,11 +545,11 @@ def test_series_index_and_literals(series_value_store):
     value = TagResolver(series_value_store).resolve(specs)
 
     expected = {
-        "lit": 100,
+        "lit": pd.Series([100] * 7),
         "calc": pd.Series([100 * (i + 1) for i in range(7)]),
     }
     assert all(value["calc"] == expected["calc"])
-    assert value["lit"] == expected["lit"]
+    assert all(value["lit"] == expected["lit"])
 
 
 def test_series_only_literals(series_value_store):
@@ -561,11 +561,12 @@ def test_series_only_literals(series_value_store):
     value = TagResolver(series_value_store).resolve(specs)
 
     expected = {
-        "lit1": 11,
-        "lit2": 22,
+        "lit1": pd.Series([11] * 7),
+        "lit2": pd.Series([22] * 7),
     }
 
-    assert value == expected
+    assert all(value["lit1"] == expected["lit1"])
+    assert all(value["lit2"] == expected["lit2"])
 
 
 def test_series_empty_specs(series_value_store):
@@ -696,7 +697,7 @@ def test_reuse_known_tags():
     }
 
     def retrieve(tags):
-        return latest_datapoint(
+        return point_at_time(
             client="mock_client",
             at_time="mock_end",
             lookbehind_start_time="mock_start",

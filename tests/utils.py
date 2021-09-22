@@ -12,6 +12,7 @@ __all__ = [
     "value_store",
     "another_value_store",
     "series_value_store",
+    "dummy_value_store",
 ]
 
 
@@ -65,25 +66,25 @@ def dummy_series_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
 
 @pytest.fixture
 def value_store(mocker):
-    from . import _utils
+    from . import utils
 
-    dummy_value_store_spy = mocker.spy(_utils, "dummy_value_store")
+    dummy_value_store_spy = mocker.spy(utils, "dummy_value_store")
     return dummy_value_store_spy
 
 
 @pytest.fixture
 def another_value_store(mocker):
-    from . import _utils
+    from . import utils
 
     dummy_another_value_store_spy = mocker.spy(
-        _utils, "dummy_another_value_store"
+        utils, "dummy_another_value_store"
     )
     return dummy_another_value_store_spy
 
 
 @pytest.fixture
 def series_value_store(mocker):
-    from . import _utils
+    from . import utils
 
-    dummy_value_store_spy = mocker.spy(_utils, "dummy_series_value_store")
+    dummy_value_store_spy = mocker.spy(utils, "dummy_series_value_store")
     return dummy_value_store_spy
