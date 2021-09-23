@@ -265,7 +265,7 @@ There are two caveats to this:
 Python does not allow overloading boolean operations, so `bool(Tag(...))` is not allowed (it will raise a `ValueError`
 with an extensive explanation.)
 
-This is because expressions like `Tag(A) or Tag(B)` get evaluated immediately, there is no (good) way to defer the 
+This is because expressions like `Tag(A) or Tag(B)` get evaluated immediately, there is no (good) way to defer the
 evaluation until values have been fetched from CDF.
 
 #### Use Bit-wise Operators
