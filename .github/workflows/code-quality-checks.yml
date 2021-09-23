@@ -1,0 +1,32 @@
+name: Code Quality
+
+on: pull_request
+
+jobs:
+  pre-commit:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e  # @v1
+    - uses: actions/setup-python@152ba7c4dd6521b8e9c93f72d362ce03bf6c4f20  # @v1
+      with:
+        python-version: '3.8'
+    - uses: pre-commit/action@0764670bf370aab253130d534e1eda7ff497dc60  # @v2.0.0
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e  # @v1
+    - uses: actions/setup-python@152ba7c4dd6521b8e9c93f72d362ce03bf6c4f20  # @v1
+      with:
+        python-version: '3.8'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip wheel
+        pip install poetry
+        poetry install
+      env:
+        POETRY_VIRTUALENVS_CREATE: false
+    - name: Test with pytest
+      run: |
+        pytest
