@@ -42,7 +42,7 @@ For more involved queries for datapoints from CDF, traditionally (by using Cogni
 
 With **Synthetic Tags** this becomes:
  1. define any custom column-wise calculations
- 2. make a dict with specifications (a single tag or an expressions involving tags)
+ 2. make a dict with specifications (a single tag or an expression involving multiple tags)
  3. fetch and calculate in one step
 
 
