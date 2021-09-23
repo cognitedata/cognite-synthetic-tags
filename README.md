@@ -33,6 +33,19 @@ with something more readable and powerful:
         ...
 ```
 
+For more involved queries for datapoints from CDF, traditionally (by using Cognite SDK for Python), we would:
+ 1. make a list of all the tags
+ 2. fetch from CDF and get a dataframe
+ 3. rename columns in the dataframe
+ 4. perform column-wise calculations
+ 5. perform any calculations specific to particular rows
+
+With **Synthetic Tags** this becomes:
+ 1. define any custom column-wise calculations
+ 2. make a dict with specifications (a single tag or an expressions involving tags)
+ 3. fetch and calculate in one step
+
+
 ## Advantages
 
 ### Expressive Syntax
@@ -61,6 +74,7 @@ operations such as:
 
 `TagResolver` is where the actual call to the API happens, and where `Tag` instances are replaced with actual values
 and where math operations are performed.
+
 
 
 ### Extendability
@@ -203,7 +217,7 @@ calls above) we should create a new instance of `TagResolver` for each one (i.e.
 `TagResolver(retrival_function).resolve` instead of `resolver.resolve`).
 
 
-### Multi-value Lookups (Series)
+## Multi-value Lookups (Series)
 
 While the primary motivation for **Synthetic Tags** library was to facilitate single-value lookups, as seen in the
 examples so far, the library also supports retrieving of multiple datapoints per tag (as `pd.Series`) as well as
@@ -212,7 +226,7 @@ performing element-wise operations on them.
 See "Full examples" section below for more examples with Series.
 
 
-### Multiple Data Stores
+## Multiple Data Stores
 
 `Tag` class supports specifying a string key for an alternative data store (a.k.a. the fetch function).
 The corresponding argument has to be present in the `TagResolver` constructor call. This allows us to mix
@@ -243,6 +257,47 @@ There are two caveats to this:
     that it executes in parallel and then combines the results of. This is an internal implementation detail of
     the Python CDF SDK and does not affect (not is being affected) by **Cognite Synthetic Tags**.
 
+
+## Limitations
+
+### Boolean expressions
+
+Python does not allow overloading boolean operations, so `bool(Tag(...))` is not allowed (it will raise a `ValueError`
+with an extensive explanation.)
+
+This is because expressions like `Tag(A) or Tag(B)` get evaluated immediately, there is no (good) way to defer the 
+evaluation until values have been fetched from CDF.
+
+#### Use Bit-wise Operators
+
+Expressions like `Tag(A) | Tag(B)` work as expected.
+
+Full list of bit-wise operators:
+ - `and`: `&`
+ - `or`: `|`
+ - `xor`: `^`
+ - `not`: `~`
+
+
+#### Don't Use Ternary Operator
+
+Because of the limitations discussed here, there is no way to use ternary operator with instances of `Tag` class:
+
+``` python
+specs = {
+    "foo": Tag(A) if Tag(A) > 0 else Tag(B),  # will not work!
+}
+````
+
+Instead, define a custom operation and use `Tag.call` to apply it:
+``` python
+def positive_a_or_b(a, b):
+    return a if a > 0 else b
+
+specs = {
+    "foo": Tag.call(positive_a_or_b, Tag(A), Tag(B)),
+}
+```
 
 
 ## Comparison with Synthetic Time Series API
