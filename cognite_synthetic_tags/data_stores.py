@@ -59,7 +59,7 @@ def retrieve_datapoints_df(
     # Reorder columns:
     df = df[columns]
 
-    return df.copy()
+    return df
 
 
 def series(
