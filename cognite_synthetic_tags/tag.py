@@ -134,26 +134,34 @@ class Tag:
         be there is a chance to resolve the specs (i.e. the short-circuiting
         happens on the line of code in the example).
         """
-        raise ValueError(
-            "Tag instances do not support boolean operators ('and', 'or')."
-            " Instead, use '&' and '|'."
-            "\nThere are many ways to get this error, some include:"
-            "\n  error: Tag(A) or Tag(B)"
-            "\n    fix: Tag(A) | Tag(B)"
-            "\n  error: Tag(A) and Tag(B)"
-            "\n    fix: Tag(A) & Tag(B)"
-            "\n  error: 1 < Tag(A) < 2"
-            "\n    fix: (1 < Tag(A)) & (Tag(A) < 2)"
-            "\n  error: 1 < Tag(A) | 2 < Tag(B)"
-            "\n    fix: (1 < Tag(A)) | (2 < Tag(B))"
-            "\n  error: bool(Tag(A))"
-            "\n    fix: Tag(A).bool()"
-            "\n  error: not Tag(A)"
-            "\n    fix: Tag(A).bool_not()"
-        )
+        raise UnsupportedOperationError()
 
     def bool(self) -> Tag:
         return self.calc("bool")
 
     def bool_not(self) -> Tag:
         return self.calc("not")
+
+
+class UnsupportedOperationError(ValueError):
+    msg = (
+        "Tag instances do not support boolean operators (e.g. 'and', 'or')."
+        " Instead, use bitwise equivalents ('&', '|')."
+        "\nThere are many ways to get this error, some include:"
+        "\n  error: Tag(A) or Tag(B)"
+        "\n    fix: Tag(A) | Tag(B)"
+        "\n  error: Tag(A) and Tag(B)"
+        "\n    fix: Tag(A) & Tag(B)"
+        "\n  error: 1 < Tag(A) < 2"
+        "\n    fix: (1 < Tag(A)) & (Tag(A) < 2)"
+        "\n  error: 1 < Tag(A) | 2 < Tag(B)"
+        "\n    fix: (1 < Tag(A)) | (2 < Tag(B))"
+        "\n  error: bool(Tag(A))"
+        "\n    fix: Tag(A).bool()"
+        "\n  error: not Tag(A)"
+        "\n    fix: Tag(A).bool_not()"
+        "\n    fix: ~Tag(A)  # same as .bool_not()"
+    )
+
+    def __init__(self):
+        super().__init__(self.msg)
