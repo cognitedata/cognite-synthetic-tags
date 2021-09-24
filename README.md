@@ -119,7 +119,7 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 ...     "value_3": Tag("METER_C"),
 ...     "answer_to_everything": Tag.call(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
->>> TagResolver(retrieval_function, my_extension).resolve(specs)
+>>> TagResolver(retrieval_function).resolve(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -573,7 +573,6 @@ in addition to the data dict:
 {
     "avg_value": 42,
     "above_average: <pd.Series of bool values, True for points that are above 42, False for others>,
-    "positive_difference: <pd.Series of bool values, True for points that are above 42, False for others>,
 }
 ```
 
