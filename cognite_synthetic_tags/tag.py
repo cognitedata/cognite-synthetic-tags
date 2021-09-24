@@ -108,10 +108,10 @@ class Tag:
     def __rfloordiv__(self, other: Any) -> Tag:
         return self.calc("r//", other)
 
-    def __rmod__(self, other):
+    def __rmod__(self, other: Any) -> Tag:
         return self.calc("r%", other)
 
-    def __rpow__(self, other):
+    def __rpow__(self, other: Any) -> Tag:
         return self.calc("r**", other)
 
     def __ror__(self, other: Any) -> Tag:

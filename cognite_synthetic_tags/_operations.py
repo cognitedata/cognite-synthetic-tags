@@ -45,7 +45,7 @@ DEFAULT_OPERATIONS: Dict[str, Callable] = {
 # oper(val1, val2)
 # Any operators in this dict will use "infix" notation:
 # val1 oper val2
-# Additionally, operators (keys) will be replaces with they values, e.g:
+# Additionally, operators (keys) will be replaced with their values, e.g:
 # 2^3 is more commonly understood to be 2 "to the power of" then 2**3 would be.
 INFIX_OPERATORS = {
     "+": "+",

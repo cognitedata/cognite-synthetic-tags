@@ -21,7 +21,7 @@ __all__ = [
 
 
 def retrieve_datapoints_df(
-    c: CogniteClient,
+    client: CogniteClient,
     id: Optional[List[int]] = None,
     external_id: Optional[List[str]] = None,
     ignore_unknown_ids: bool = True,
@@ -36,7 +36,7 @@ def retrieve_datapoints_df(
     results in missing columns, while `ignore_unknown_ids="fill"` or
     `"fill,dropna"` raise exceptions.
     """
-    res = c.datapoints.retrieve(
+    res = client.datapoints.retrieve(
         id=id,
         external_id=external_id,
         ignore_unknown_ids=ignore_unknown_ids,
@@ -85,7 +85,7 @@ def series(
      * this function takes `aggregate` (singular) instead of `aggregates`
        (plural), and expects a string (no support for a list, use multiple `Tag`
        instances for that).
-     * additional argument: `ffill` will forward-fill the data is set to `True`
+     * additional argument: `ffill` will forward-fill the data if set to `True`
      * additional argument: `fillna` will replace `np.nan` with specified value
        unless set to `None` (which is the default)
     """
@@ -104,7 +104,7 @@ def series(
                 limit=limit,
             )
         else:
-            df = pd.DataFrame({})
+            df = pd.DataFrame()
         if ffill:
             df = df.ffill()
         if fillna is not None:

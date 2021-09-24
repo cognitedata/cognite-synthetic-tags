@@ -57,7 +57,7 @@ With **Synthetic Tags** this becomes:
 ...     "sum_of_2_things": Tag("THING_A") + Tag("THING_B"),
 ... }
 
->>> TagResolver(retrival_function).resolve(specs)
+>>> TagResolver(retrieval_function).resolve(specs)
 {
     "some_valve": 42.0000123,
     "another_meter": 42000.456000,
@@ -95,7 +95,7 @@ from CDF.
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc(galons_per_minute),
 ... }
 
->>> TagResolver(retrival_function).resolve(specs)
+>>> TagResolver(retrieval_function).resolve(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
     "flow_in_galons_per_minute": 54.35604149,
@@ -119,7 +119,7 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 ...     "value_3": Tag("METER_C"),
 ...     "answer_to_everything": Tag.call(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
->>> TagResolver(retrival_function, my_extension).resolve(specs)
+>>> TagResolver(retrieval_function, my_extension).resolve(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -146,7 +146,7 @@ This feature can be used to address issues with importing Python modules.
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc("galons_per_minute"),
 ... }
 
->>> TagResolver(retrival_function, my_extension).resolve(specs)
+>>> TagResolver(retrieval_function, my_extension).resolve(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
     "flow_in_galons_per_minute": 54.35604149,
@@ -166,7 +166,7 @@ This feature can be used to address issues with importing Python modules.
 ...     "answer_to_everything": Tag.call("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
 
->>> TagResolver(retrival_function, {"nearest_42": closest_to_42}).resolve(specs)
+>>> TagResolver(retrieval_function, {"nearest_42": closest_to_42}).resolve(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -184,7 +184,7 @@ Each instance of `TagResolver` keeps internal cache and only queries the API for
 In the next example with multiple calls to `resolve()`, the CDF time series API endpoint is hit only once.
 
 ``` python
->>> resolver = TagResolver(retrival_function)
+>>> resolver = TagResolver(retrieval_function)
 
 >>> resolver.resolve({
 ...     "value_1": Tag("METER_A"),
@@ -198,23 +198,23 @@ In the next example with multiple calls to `resolve()`, the CDF time series API 
 
 >>> resolver.resolve({
 ...     "value_1": Tag("METER_A"),
-...     "val_1_percent": 100 * Tag("METER_A") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
+...     "value_1_percent": 100 * Tag("METER_A") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
 {"value_1": 12, "value_1_percent": 17,3913043478}
 
 >>> resolver.resolve({
 ...     "value_2": Tag("METER_B"),
-...     "val_2_percent": 100 * Tag("METER_B") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
+...     "value_2_percent": 100 * Tag("METER_B") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
-{"value_1": 23, "value_1_percent": 33,3333333333}
+{"value_2": 23, "value_2_percent": 33.3333333333}
 ```
 
 
 #### Avoiding Cache
 
-In case that the caching is not desired (i.e. if we wanted to query the CDF again in each of the three `resolve()`
+In case that the caching is not desired (i.e. if we wanted to query CDF again in each of the three `resolve()`
 calls above) we should create a new instance of `TagResolver` for each one (i.e. use
-`TagResolver(retrival_function).resolve` instead of `resolver.resolve`).
+`TagResolver(retrieval_function).resolve` instead of `resolver.resolve`).
 
 
 ## Multi-value Lookups (Series)
@@ -384,13 +384,13 @@ Get your API key from https://openindustrialdata.com/get-started/
 >>> # simple multiplication:
 >>> specs = {"valve_percent": 100 * Tag(VALVE_22)}
 >>> tag_resolver.resolve(specs)
-{'valve': 39.25000130113021085}
+{'valve_percent': 39.25000130113021085}
 ```
 ``` python
 >>> # apply a function to a value:
 >>> specs = {"valve_percent_int": (100 * Tag(VALVE_22)).calc(round)}
 >>> tag_resolver.resolve(specs)
-{'valve': 39.25000130113021085}
+{'valve_percent_int': 39}
 ```
 
 > Notice in the last example we cal `calc` on the result of `100 * Tag(...)`. This works because whenever  a `Tag`
@@ -481,7 +481,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 This example below is intentionally as similar as possible to the previous example. The only difference is the retrieval
 function passed to `TagResolver`: `get_series` in this example vs `get_latest` in the previous one.
 
-> See definition of `get_series` and `get_lates` at the start of [Full Examples](#full-examples) section above.
+> See definition of `get_series` and `get_latest` at the start of [Full Examples](#full-examples) section above.
 
 ``` python
 >>> custom_operations = {"max": max, "sum": lambda *vals: sum([*vals])}
@@ -545,7 +545,7 @@ This is a natural fit for series results, e.g:
 ...
 ```
 
-For single-value responses, the DataFrame will have a single row, and the call to `pd.DataFrames` will require an index
+For single-value responses, the DataFrame will have a single row, and the call to `pd.DataFrame` will require an index
 in addition to the data dict:
 
 ``` python
@@ -577,7 +577,7 @@ in addition to the data dict:
 }
 ```
 
-Responses with mixed single-value adn multi-value items can also be passed into `pd.DataFrame` constructor. Pandas
+Responses with mixed single-value and multi-value items can also be passed into `pd.DataFrame` constructor. Pandas
 will automatically repeat any single-value items across all rows in the new dataframe.
 
 If using multiple data store function, the results will likely have different indexes. `pd.DataFrame` constructor will
