@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 
 from cognite_synthetic_tags import Tag, TagResolver, point_at_time
 
@@ -281,12 +282,8 @@ def test_recursive_cyclic(value_store):
         "value_2": Tag("value_1") * 10,
     }
 
-    try:
+    with pytest.raises(ValueError):
         TagResolver(value_store).resolve(specs)
-    except ValueError as exc:
-        assert "Cyclic definition of tags with" in exc.args[0]
-    else:
-        assert False, "Exception not raised"
 
 
 def test_recursive_cyclic_deep(value_store):
@@ -296,12 +293,8 @@ def test_recursive_cyclic_deep(value_store):
         "value_3": Tag("value_2") * 10,
     }
 
-    try:
+    with pytest.raises(ValueError):
         TagResolver(value_store).resolve(specs)
-    except ValueError as exc:
-        assert "Cyclic definition of tags with" in exc.args[0]
-    else:
-        assert False, "Exception not raised"
 
 
 def test_recursive_same_name(value_store):
@@ -326,12 +319,8 @@ def test_recursive_same_name_reassigned(value_store):
         "A1": Tag("A1") * 10,
     }
 
-    try:
+    with pytest.raises(ValueError):
         TagResolver(value_store).resolve(specs)
-    except ValueError as exc:
-        assert "Cyclic definition of tags" in exc.args[0]
-    else:
-        assert False, "Exception not raised"
 
 
 def test_literal_value(value_store):

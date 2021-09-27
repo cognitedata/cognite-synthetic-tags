@@ -1,3 +1,5 @@
+import pytest
+
 from cognite_synthetic_tags import Tag
 from cognite_synthetic_tags.tag import UnsupportedOperationError
 
@@ -138,45 +140,25 @@ def test_tag_str_uft8_ne():
 
 
 def test_tag_bool_wrong_bool():
-    try:
+    with pytest.raises(UnsupportedOperationError):
         bool(Tag("A3"))
-    except ValueError as exc:
-        assert isinstance(exc, UnsupportedOperationError)
-    else:
-        assert False, "Expected ValueError not raised!"
 
 
 def test_tag_bool_wrong_and():
-    try:
+    with pytest.raises(UnsupportedOperationError):
         Tag("A3") and Tag("A4")
-    except ValueError as exc:
-        assert isinstance(exc, UnsupportedOperationError)
-    else:
-        assert False, "Expected ValueError not raised!"
 
 
 def test_tag_bool_wrong_or():
-    try:
+    with pytest.raises(UnsupportedOperationError):
         Tag("A3") or Tag("A4")
-    except ValueError as exc:
-        assert isinstance(exc, UnsupportedOperationError)
-    else:
-        assert False, "Expected ValueError not raised!"
 
 
 def test_tag_bool_wrong_chained_comparison():
-    try:
+    with pytest.raises(UnsupportedOperationError):
         1 < Tag("A3") < 5
-    except ValueError as exc:
-        assert isinstance(exc, UnsupportedOperationError)
-    else:
-        assert False, "Expected ValueError not raised!"
 
 
 def test_tag_bool_wrong_precedence():
-    try:
+    with pytest.raises(UnsupportedOperationError):
         Tag("A3") < 5 & Tag("B2") > 7
-    except ValueError as exc:
-        assert isinstance(exc, UnsupportedOperationError)
-    else:
-        assert False, "Expected ValueError not raised!"

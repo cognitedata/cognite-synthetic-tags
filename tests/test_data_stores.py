@@ -265,12 +265,8 @@ def test_unknown_tag_dont_tolerate(mocked_client):
         ignore_unknown_ids=False,
     )
 
-    try:
+    with pytest.raises(CogniteAPIError):
         store({"FOO.bar"})
-    except CogniteAPIError:
-        pass
-    else:
-        assert False, "Didn't raise the expected exception."
 
 
 def test_empty(mocked_client):
