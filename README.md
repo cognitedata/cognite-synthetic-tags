@@ -455,7 +455,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 ### Custom function calls on multiple Tag values
 
 ``` python
->>> custom_operations = {"max": max, "sum": lambda *vals: sum([*vals])}
+>>> custom_operations = {"max": max, "sum": lambda *vals: sum(vals)}
 >>> tag_resolver = TagResolver(get_latest, custom_operations)
 
 >>> specs = {
@@ -484,7 +484,7 @@ function passed to `TagResolver`: `get_series` in this example vs `get_latest` i
 > See definition of `get_series` and `get_latest` at the start of [Full Examples](#full-examples) section above.
 
 ``` python
->>> custom_operations = {"max": max, "sum": lambda *vals: sum([*vals])}
+>>> custom_operations = {"max": max, "sum": lambda *vals: sum(vals)}
 >>> tag_resolver = TagResolver(get_series, custom_operations)
 
 >>> specs = {
