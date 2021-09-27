@@ -73,7 +73,7 @@ algebra operations such as:
 
 It also supports function calls, either on multiple tags or on individual tags:
  * calculations on individual tags: `value_int = Tag("MEETER_G").calc(round)`
- * functions with multiple tags: `value_foo = Tag.call(bar, Tag("MEETER_H"), Tag("MEETER_I"), Tag("MEETER_J"))`
+ * functions with multiple tags: `value_foo = Tag.apply(bar, Tag("MEETER_H"), Tag("MEETER_I"), Tag("MEETER_J"))`
    * `bar` is a function, see [Calculations with Multiple Tags](#calculations-with-multiple-tags) section below.
 
 
@@ -109,7 +109,7 @@ from CDF.
 
 #### Calculations with Multiple Tags
 
-`Tag.call` is a class method that takes a callable and any number of `Tag` instances. When the values are fetched from
+`Tag.apply` is a class method that takes a callable and any number of `Tag` instances. When the values are fetched from
 CDF, the callable will be applied (element-wise) with the tag values passed to it as arguments.
 
 ``` python
@@ -122,7 +122,7 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 ...     "value_1": Tag("METER_A"),
 ...     "value_2": Tag("METER_B"),
 ...     "value_3": Tag("METER_C"),
-...     "answer_to_everything": Tag.call(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
+...     "answer_to_everything": Tag.apply(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
 >>> TagResolver(retrieval_function).resolve(specs)
 {
@@ -135,18 +135,18 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 
 ##### `Tag.calc` is a Shorthand
 
-`Tag.calc` (not to be confused with `Tag.call`) is provided as a convenience method and for a more readable syntax.
-It is equivalent to `Tag.call` with a single argument:
+`Tag.calc` (not to be confused with `Tag.apply`) is provided as a convenience method and for a more readable syntax.
+It is equivalent to `Tag.apply` with a single argument:
 
 ``` python
 # These two lines are equivalent:
 Tag("FLOW_METER.123").calc(galons_per_minute)
-Tag.call(galons_per_minute, Tag("FLOW_METER.123"))
+Tag.apply(galons_per_minute, Tag("FLOW_METER.123"))
 ```
 
 #### Referencing Functions by Name
 
-Both `calc` and `call` accept a string instead of a callable for their first argument. In this case, the string
+Both `calc` and `apply` accept a string instead of a callable for their first argument. In this case, the string
 must match a key in a dict passed to `TagResolver`. This dict contains the actual callables which are then used as
 described above.
 
@@ -179,7 +179,7 @@ This feature can be used to address issues with importing Python modules, or to 
 ...     "value_1": Tag("METER_A"),
 ...     "value_2": Tag("METER_B"),
 ...     "value_3": Tag("METER_C"),
-...     "answer_to_everything": Tag.call("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
+...     "answer_to_everything": Tag.apply("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
 
 >>> TagResolver(retrieval_function, {"nearest_42": closest_to_42}).resolve(specs)
@@ -305,13 +305,13 @@ specs = {
 }
 ````
 
-Instead, define a custom operation and use `Tag.call` to apply it:
+Instead, define a custom operation and use `Tag.apply` to apply it:
 ``` python
 def positive_a_or_b(a, b):
     return a if a > 0 else b
 
 specs = {
-    "foo": Tag.call(positive_a_or_b, Tag(A), Tag(B)),
+    "foo": Tag.apply(positive_a_or_b, Tag(A), Tag(B)),
 }
 ```
 
@@ -478,10 +478,10 @@ Get your API key from https://openindustrialdata.com/get-started/
 ...     "pressure_1": Tag(METER_A),
 ...     "pressure_2": Tag(METER_B),
 ...     "pressure_3": Tag(METER_C),
-...     "pressure_highest": Tag.call("max", Tag(METER_A), Tag(METER_B), Tag(METER_C)),
+...     "pressure_highest": Tag.apply("max", Tag(METER_A), Tag(METER_B), Tag(METER_C)),
 ...     "highest_to_total_ratio": (
-...         Tag.call("max", Tag(METER_A), Tag(METER_B), Tag(METER_C))
-..          / Tag.call("sum", Tag(METER_A), Tag(METER_B), Tag(METER_C))
+...         Tag.apply("max", Tag(METER_A), Tag(METER_B), Tag(METER_C))
+..          / Tag.apply("sum", Tag(METER_A), Tag(METER_B), Tag(METER_C))
 ...     ),
 ... }
 >>> tag_resolver.resolve(specs)
@@ -507,10 +507,10 @@ function passed to `TagResolver`: `get_series` in this example vs `get_latest` i
 ...     "pressure_1": Tag(METER_A),
 ...     "pressure_2": Tag(METER_B),
 ...     "pressure_3": Tag(METER_C),
-...     "pressure_highest": Tag.call("max", Tag(METER_A), Tag(METER_B), Tag(METER_C)),
+...     "pressure_highest": Tag.apply("max", Tag(METER_A), Tag(METER_B), Tag(METER_C)),
 ...     "highest_to_total_ratio": (
-...         Tag.call("max", Tag(METER_A), Tag(METER_B), Tag(METER_C))
-..          / Tag.call("sum", Tag(METER_A), Tag(METER_B), Tag(METER_C))
+...         Tag.apply("max", Tag(METER_A), Tag(METER_B), Tag(METER_C))
+..          / Tag.apply("sum", Tag(METER_A), Tag(METER_B), Tag(METER_C))
 ...     ),
 ... }
 >>> tag_resolver.resolve(specs)
@@ -671,7 +671,7 @@ Check docstrings for more details.
 
 ## TODO
 
- * Add better support for passing lambdas to `calc` an `call`, e.g. `Tag(..).calc(some_value=lambda val: val + 42)`
+ * Add better support for passing lambdas to `calc` an `apply`, e.g. `Tag(..).calc(some_value=lambda val: val + 42)`
  * Internally **Synthetic Tags** is using `DataFrame` and `Series` from Pandas. There is a small performance penalty
    associated with this, so we should probably make the effort to work directly with response objects from Cognite SDK.
  * Check the effects of `include_outside_points` on the provided data store functions.

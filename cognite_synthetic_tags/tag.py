@@ -20,10 +20,10 @@ class Tag:
         return self.__str__()
 
     def calc(self, operator_: OperatorT, *args: Any) -> Tag:
-        return Tag.call(operator_, self, *args)
+        return Tag.apply(operator_, self, *args)
 
     @classmethod
-    def call(cls, operator_: OperatorT, *args: Any) -> Tag:
+    def apply(cls, operator_: OperatorT, *args: Any) -> Tag:
         if callable(operator_):
             oper_str = operator_.__name__
         else:

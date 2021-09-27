@@ -177,10 +177,10 @@ def test_calc_custom_operation(value_store):
     assert value == expected
 
 
-def test_call_custom_operation(value_store):
+def test_apply_custom_operation(value_store):
     specs = {
-        "value_1": Tag.call("max", Tag("A2"), Tag("B7")),
-        "value_2": Tag.call("max", Tag("A2") * 11, Tag("B7")),
+        "value_1": Tag.apply("max", Tag("A2"), Tag("B7")),
+        "value_2": Tag.apply("max", Tag("A2") * 11, Tag("B7")),
     }
     additional_operations = {"max": max}
 
@@ -193,12 +193,12 @@ def test_call_custom_operation(value_store):
     assert value == expected
 
 
-def test_call_literal_functions(value_store):
+def test_apply_literal_functions(value_store):
     def foo(a, b):
         return f"{a} and {b}"
 
     specs = {
-        "value_1": Tag.call(foo, Tag("A2"), Tag("B7")),
+        "value_1": Tag.apply(foo, Tag("A2"), Tag("B7")),
     }
 
     value = TagResolver(value_store).resolve(specs)

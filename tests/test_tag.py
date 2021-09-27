@@ -40,8 +40,8 @@ def test_tag_str_with_prefix_operator():
     assert value == expected
 
 
-def test_tag_str_call_with_extension():
-    tag = Tag.call("foo", Tag("A2"), Tag("B3"))
+def test_tag_str_apply_with_extension():
+    tag = Tag.apply("foo", Tag("A2"), Tag("B3"))
 
     value = str(tag)
 
@@ -49,7 +49,7 @@ def test_tag_str_call_with_extension():
     assert value == expected
 
 
-def test_tag_str_call_with_comparison_operator():
+def test_tag_str_apply_with_comparison_operator():
     tag = Tag("A2") > Tag("B3")
 
     value = str(tag)
@@ -58,11 +58,11 @@ def test_tag_str_call_with_comparison_operator():
     assert value == expected
 
 
-def test_tag_str_call_with_literal_function():
+def test_tag_str_apply_with_literal_function():
     def foobar(a, b):
         ...
 
-    tag = Tag.call(foobar, Tag("A2"), Tag("B3"))
+    tag = Tag.apply(foobar, Tag("A2"), Tag("B3"))
 
     value = str(tag)
 
@@ -104,7 +104,7 @@ def test_tag_str_calc_foo():
     def foo(*a):
         ...
 
-    tag = Tag.call(foo, Tag("A2") * Tag("B3") + 2 * Tag("C4"), Tag("D5")) + 4
+    tag = Tag.apply(foo, Tag("A2") * Tag("B3") + 2 * Tag("C4"), Tag("D5")) + 4
 
     value = str(tag)
 

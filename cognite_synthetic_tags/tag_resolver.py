@@ -29,7 +29,6 @@ class TagResolver:
     >>> TagResolver(dummy_value_store).resolve(specs)
     {'value_1': 1, 'value_2': 7}
 
-    >>> dummy_value_store.calls = []
     >>> specs = {
     ...     "value_1": Tag("A1") * 2,
     ...     "value_2": Tag("A1") * 3 + Tag("B2") * 1000 * Tag("B3"),
