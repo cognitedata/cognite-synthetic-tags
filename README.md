@@ -33,7 +33,7 @@ with something more readable and powerful:
         ...
 ```
 
-For more involved queries for datapoints from CDF, traditionally (by using Cognite SDK for Python), we would:
+Traditionally (by using Cognite SDK for Python), to retrieve a moderately complex set of data from CDF, we would:
  1. make a list of all the tags
  2. fetch from CDF and get a dataframe
  3. rename columns in the dataframe
@@ -42,7 +42,7 @@ For more involved queries for datapoints from CDF, traditionally (by using Cogni
 
 With **Synthetic Tags** this becomes:
  1. define any custom column-wise calculations
- 2. make a dict with specifications (a single tag or an expression involving multiple tags)
+ 2. make a dict with specifications for columns (a single tag, or an expression involving multiple tags and functions)
  3. fetch and calculate in one step
 
 
@@ -65,11 +65,16 @@ With **Synthetic Tags** this becomes:
 }
 ```
 
-`Tag` class is used as a reference for values that are going to be fetched from API. It "understands" may common algebra
-operations such as:
+`Tag` class is used as a reference for values that are going to be fetched from API. It "understands" many common
+algebra operations such as:
  * basic math operations: `total_a_b = Tag("METER_A") + Tag("METER_B")`
  * parenthesis and literal values: `complicated_calculation = (Tag("METER_C") - 10) / (Tag("METER_D") + TAG("METER_E"))"`
  * boolean logic: `alert_status = Tag("METER_F") > 42`
+
+It also supports function calls, either on multiple tags or on individual tags:
+ * calculations on individual tags: `value_int = Tag("MEETER_G").calc(round)`
+ * functions with multiple tags: `value_foo = Tag.call(bar, Tag("MEETER_H"), Tag("MEETER_I"), Tag("MEETER_J"))`
+   * `bar` is a function, see [Calculations with Multiple Tags](#calculations-with-multiple-tags) section below.
 
 
 `TagResolver` is where the actual call to the API happens, and where `Tag` instances are replaced with actual values
@@ -128,13 +133,24 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 }
 ```
 
+##### `Tag.calc` is a Shorthand
+
+`Tag.calc` (not to be confused with `Tag.call`) is provided as a convenience method and for a more readable syntax.
+It is equivalent to `Tag.call` with a single argument:
+
+``` python
+# These two lines are equivalent:
+Tag("FLOW_METER.123").calc(galons_per_minute)
+Tag.call(galons_per_minute, Tag("FLOW_METER.123"))
+```
+
 #### Referencing Functions by Name
 
 Both `calc` and `call` accept a string instead of a callable for their first argument. In this case, the string
 must match a key in a dict passed to `TagResolver`. This dict contains the actual callables which are then used as
 described above.
 
-This feature can be used to address issues with importing Python modules.
+This feature can be used to address issues with importing Python modules, or to specify short functions using `lambda`.
 
 ``` python
 >>> my_extension = {
