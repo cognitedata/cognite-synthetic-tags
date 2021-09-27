@@ -216,7 +216,7 @@ In the next example with multiple calls to `resolve()`, the CDF time series API 
 ...     "value_1": Tag("METER_A"),
 ...     "value_1_percent": 100 * Tag("METER_A") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
-{"value_1": 12, "value_1_percent": 17,3913043478}
+{"value_1": 12, "value_1_percent": 17.3913043478}
 
 >>> resolver.resolve({
 ...     "value_2": Tag("METER_B"),
