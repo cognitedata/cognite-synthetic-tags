@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from contextlib import suppress
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -73,9 +74,7 @@ class TagResolver:
 
         # recursively find all the actual CDF tags from the specs:
         self._specs = specs
-        real_tags: Dict[str, Set[str]] = {
-            store_key: set() for store_key in self.data_stores.keys()
-        }
+        real_tags = defaultdict(set)
         for key, tag in specs.items():
             if tag.formula:
                 # dig into the formula recursively
@@ -164,9 +163,7 @@ class TagResolver:
         Given a tag formula, recursively collect all other tag names mentioned
         in the formula.
         """
-        tags: Dict[str, Set[str]] = {
-            store_key: set() for store_key in self.data_stores.keys()
-        }
+        tags = defaultdict(set)
         for item in formula[1]:
             self._recursive_tags += [self._recursive_tags[-1].copy()]
             if hasattr(item, "formula"):
@@ -189,9 +186,7 @@ class TagResolver:
         return tags
 
     def _get_item_value_store(self, item: Any) -> str:
-        store_key = self._default_store_key
-        with suppress(AttributeError):
-            store_key = item.store or store_key
+        store_key = getattr(item, "store", None) or self._default_store_key
         if store_key not in self.data_stores:
             raise ValueError(
                 f"Unknown value store '{store_key}' for tag '{item}'."
