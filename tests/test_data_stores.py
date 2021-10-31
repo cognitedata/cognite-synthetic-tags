@@ -14,20 +14,12 @@ def mocked_client():
     p_client = MagicMock()
     p_retrieve = p_client.datapoints.retrieve.return_value
     p_retrieve.to_pandas.return_value = pd.DataFrame(
-        columns=["houston.ro.REMOTE_AI[22]"],
-        data=[
-            [0.003925000131130218],
-            [np.nan],
-            [np.nan],
+        {"houston.ro.REMOTE_AI[22]": [0.003925000131130218, np.nan, np.nan]},
+        index=[
+            "2020-01-01T00:00:53",
+            "2020-01-01T00:00:54",
+            "2020-01-01T00:00:55",
         ],
-        index=map(
-            lambda val: datetime.strptime(val, "%Y-%m-%dT%H:%M:%S"),
-            [
-                "2020-01-01T00:00:53",
-                "2020-01-01T00:00:54",
-                "2020-01-01T00:00:55",
-            ],
-        ),
     )
     return p_client
 

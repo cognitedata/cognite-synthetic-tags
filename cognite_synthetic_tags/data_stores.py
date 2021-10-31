@@ -109,7 +109,6 @@ def series(
             df = df.ffill()
         if fillna is not None:
             df = df.fillna(fillna)
-            # (BTW, Pandas doesn't support df.fillna(None) ¯\_(ツ)_/¯ )
         if aggregate:
             df.columns = [
                 col.replace(f"|{aggregate}", "") for col in df.columns
