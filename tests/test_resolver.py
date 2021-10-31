@@ -1,11 +1,14 @@
+from unittest import mock
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from pandas._testing import assert_frame_equal
 
-from cognite_synthetic_tags import Tag, TagResolver, point_at_time
+from cognite_synthetic_tags import Tag, TagResolver
 
 from .utils import *  # noqa
+from .utils import now
 
 
 def test_regular_tag(value_store):
@@ -15,9 +18,9 @@ def test_regular_tag(value_store):
 
     value = TagResolver(value_store).resolve(specs)
 
-    expected = {"value_1": 1}
-    assert value == expected
-    value_store.assert_called_once_with({"A1"})
+    expected = {"value_1": pd.Series([1], index=pd.DatetimeIndex([now]))}
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
+    value_store.get.assert_called_once_with({"A1"})
 
 
 def test_regular_tags(value_store):
@@ -28,9 +31,12 @@ def test_regular_tags(value_store):
 
     value = TagResolver(value_store).resolve(specs)
 
-    expected = {"value_1": 1, "value_2": 2}
-    assert value == expected
-    value_store.assert_called_once_with({"A1", "B2"})
+    expected = {
+        "value_1": pd.Series([1], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([2], index=pd.DatetimeIndex([now])),
+    }
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
+    value_store.get.assert_called_once_with({"A1", "B2"})
 
 
 def test_synthetic_tag(value_store):
@@ -40,9 +46,9 @@ def test_synthetic_tag(value_store):
 
     value = TagResolver(value_store).resolve(specs)
 
-    expected = {"value_1": 7}
-    assert value == expected
-    value_store.assert_called_once_with({"A1", "B2", "B3"})
+    expected = {"value_1": pd.Series([7], index=pd.DatetimeIndex([now]))}
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
+    value_store.get.assert_called_once_with({"A1", "B2", "B3"})
 
 
 def test_synthetic_tags(value_store):
@@ -53,9 +59,12 @@ def test_synthetic_tags(value_store):
 
     value = TagResolver(value_store).resolve(specs)
 
-    expected = {"value_1": 7, "value_2": 312}
-    assert value == expected
-    value_store.assert_called_once_with({"A1", "B2", "B3", "A10", "C300"})
+    expected = {
+        "value_1": pd.Series([7], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([312], index=pd.DatetimeIndex([now])),
+    }
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
+    value_store.get.assert_called_once_with({"A1", "B2", "B3", "A10", "C300"})
 
 
 def test_arithmetic_operations(value_store):
@@ -66,9 +75,12 @@ def test_arithmetic_operations(value_store):
 
     value = TagResolver(value_store).resolve(specs)
 
-    expected = {"value_1": 20, "value_2": 30012}
-    assert value == expected
-    value_store.assert_called_once_with({"A2", "A10", "C300"})
+    expected = {
+        "value_1": pd.Series([20], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([30012], index=pd.DatetimeIndex([now])),
+    }
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
+    value_store.get.assert_called_once_with({"A2", "A10", "C300"})
 
 
 def test_more_arithmetic_operations(value_store):
@@ -87,17 +99,17 @@ def test_more_arithmetic_operations(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": 5,
-        "value_2": 13,
-        "value_3": -9,
-        "value_4": 10.0,
-        "value_5": 9,
-        "value_6": 27,
-        "value_7": 2,
-        "value_8": 2,
-        "value_9": 4,
+        "value_1": pd.Series([5], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([13], index=pd.DatetimeIndex([now])),
+        "value_3": pd.Series([-9], index=pd.DatetimeIndex([now])),
+        "value_4": pd.Series([10.0], index=pd.DatetimeIndex([now])),
+        "value_5": pd.Series([9], index=pd.DatetimeIndex([now])),
+        "value_6": pd.Series([27], index=pd.DatetimeIndex([now])),
+        "value_7": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "value_8": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "value_9": pd.Series([4], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_bool(value_store):
@@ -111,13 +123,12 @@ def test_bool(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": True,
-        "value_2": False,
-        "value_3": False,
-        "value_4": True,
+        "value_1": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "value_3": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "value_4": pd.Series([True], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
-    assert all([isinstance(val, bool) for val in value.values()])
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_boolean_operators(value_store):
@@ -134,15 +145,15 @@ def test_boolean_operators(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": True,
-        "value_2": False,
-        "value_3": False,
-        "value_4": True,
-        "value_5": True,
-        "value_6": False,
-        "value_7": True,
+        "value_1": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "value_3": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "value_4": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "value_5": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "value_6": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "value_7": pd.Series([True], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_calc(value_store):
@@ -153,9 +164,9 @@ def test_calc(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": 42,
+        "value_1": pd.Series([42], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_calc_custom_operation(value_store):
@@ -171,10 +182,10 @@ def test_calc_custom_operation(value_store):
     value = TagResolver(value_store, additional_operations).resolve(specs)
 
     expected = {
-        "value_1": "424242",
-        "value_2": True,
+        "value_1": pd.Series(["424242"], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([True], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_apply_custom_operation(value_store):
@@ -187,10 +198,10 @@ def test_apply_custom_operation(value_store):
     value = TagResolver(value_store, additional_operations).resolve(specs)
 
     expected = {
-        "value_1": 7,
-        "value_2": 22,
+        "value_1": pd.Series([7], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([22], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_apply_literal_functions(value_store):
@@ -204,9 +215,9 @@ def test_apply_literal_functions(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": "2 and 7",
+        "value_1": pd.Series(["2 and 7"], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_calc_literal_functions(value_store):
@@ -218,9 +229,9 @@ def test_calc_literal_functions(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": "foo of 2",
+        "value_1": pd.Series(["foo of 2"], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_recursive_spec(value_store):
@@ -232,10 +243,10 @@ def test_recursive_spec(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": 3,
-        "value_2": 30,
+        "value_1": pd.Series([3], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([30], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_recursive_spec_repeated(value_store):
@@ -248,11 +259,11 @@ def test_recursive_spec_repeated(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": 3,
-        "value_2": 30,
-        "value_3": 33,
+        "value_1": pd.Series([3], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([30], index=pd.DatetimeIndex([now])),
+        "value_3": pd.Series([33], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_recursive_spec_repeated_deep(value_store):
@@ -267,13 +278,13 @@ def test_recursive_spec_repeated_deep(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "value_1": 3,
-        "value_2": 30,
-        "value_3": 40,
-        "value_4": 70,
-        "value_5": 73,
+        "value_1": pd.Series([3], index=pd.DatetimeIndex([now])),
+        "value_2": pd.Series([30], index=pd.DatetimeIndex([now])),
+        "value_3": pd.Series([40], index=pd.DatetimeIndex([now])),
+        "value_4": pd.Series([70], index=pd.DatetimeIndex([now])),
+        "value_5": pd.Series([73], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_recursive_cyclic(value_store):
@@ -304,14 +315,8 @@ def test_recursive_same_name(value_store):
         "total": Tag("A1") + Tag("A2"),
     }
 
-    value = TagResolver(value_store).resolve(specs)
-
-    expected = {
-        "A1": 1,
-        "A2": 2,
-        "total": 3,
-    }
-    assert value == expected
+    with pytest.raises(ValueError):
+        TagResolver(value_store).resolve(specs)
 
 
 def test_recursive_same_name_reassigned(value_store):
@@ -328,12 +333,14 @@ def test_literal_value(value_store):
         "A2": 2,
     }
 
-    value = TagResolver(value_store).resolve(specs)
+    with mock.patch("cognite_synthetic_tags.tag_resolver.datetime") as m_dt:
+        m_dt.utcnow.return_value = now
+        value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "A2": 2,
+        "A2": pd.Series([2], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_literal_value_used_in_formula(value_store):
@@ -342,13 +349,15 @@ def test_literal_value_used_in_formula(value_store):
         "A3": Tag("A2") * 3,
     }
 
-    value = TagResolver(value_store).resolve(specs)
+    with mock.patch("cognite_synthetic_tags.tag_resolver.datetime") as m_dt:
+        m_dt.utcnow.return_value = now
+        value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "A2": 2,
-        "A3": 6,
+        "A2": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "A3": pd.Series([6], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_literals_only(value_store):
@@ -357,13 +366,15 @@ def test_literals_only(value_store):
         "lit2": 22,
     }
 
-    value = TagResolver(value_store).resolve(specs)
+    with mock.patch("cognite_synthetic_tags.tag_resolver.datetime") as m_dt:
+        m_dt.utcnow.return_value = now
+        value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "lit1": 11,
-        "lit2": 22,
+        "lit1": pd.Series([11], index=pd.DatetimeIndex([now])),
+        "lit2": pd.Series([22], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_empty_specs(value_store):
@@ -396,22 +407,22 @@ def test_comparators(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "A2_status1": True,
-        "A2_status2": False,
-        "A2_status3": True,
-        "A2_status4": False,
-        "A2_status5": True,
-        "A2_status6": True,
-        "A2_status7": True,
-        "A2_status8": False,
-        "A2_status9": False,
-        "A2_status10": True,
-        "A2_status11": False,
-        "A2_status12": True,
-        "A2_status13": True,
-        "A2_status14": False,
+        "A2_status1": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status2": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status3": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status4": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status5": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status6": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status7": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status8": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status9": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status10": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status11": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status12": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status13": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status14": pd.Series([False], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_reversed_comparators(value_store):
@@ -435,22 +446,22 @@ def test_reversed_comparators(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "A2_status1": True,
-        "A2_status2": False,
-        "A2_status3": False,
-        "A2_status4": True,
-        "A2_status5": True,
-        "A2_status6": True,
-        "A2_status7": True,
-        "A2_status8": False,
-        "A2_status9": False,
-        "A2_status10": True,
-        "A2_status11": False,
-        "A2_status12": True,
-        "A2_status13": True,
-        "A2_status14": False,
+        "A2_status1": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status2": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status3": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status4": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status5": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status6": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status7": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status8": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status9": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status10": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status11": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "A2_status12": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status13": pd.Series([True], index=pd.DatetimeIndex([now])),
+        "A2_status14": pd.Series([False], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_comparison_after_math(value_store):
@@ -463,10 +474,10 @@ def test_comparison_after_math(value_store):
     value = TagResolver(value_store).resolve(specs)
 
     expected = {
-        "status1": False,
-        "status2": True,
+        "status1": pd.Series([False], index=pd.DatetimeIndex([now])),
+        "status2": pd.Series([True], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_series_math(series_value_store):
@@ -541,23 +552,6 @@ def test_series_index_and_literals(series_value_store):
     assert all(value["lit"] == expected["lit"])
 
 
-def test_series_only_literals(series_value_store):
-    specs = {
-        "lit1": 11,
-        "lit2": 22,
-    }
-
-    value = TagResolver(series_value_store).resolve(specs)
-
-    expected = {
-        "lit1": pd.Series([11] * 7),
-        "lit2": pd.Series([22] * 7),
-    }
-
-    assert all(value["lit1"] == expected["lit1"])
-    assert all(value["lit2"] == expected["lit2"])
-
-
 def test_series_empty_specs(series_value_store):
     specs = {}
 
@@ -598,18 +592,18 @@ def test_series_bool(series_value_store):
 
 def test_multiple_data_stores(value_store, another_value_store):
     specs = {
-        "A2": Tag("A2"),
-        "A3": Tag("A3", "alt_fetch"),
+        "val2": Tag("A2"),
+        "val3": Tag("A3", "alt_fetch"),
     }
 
     resolver = TagResolver(value_store, alt_fetch=another_value_store)
     value = resolver.resolve(specs)
 
     expected = {
-        "A2": 2,
-        "A3": 3333,
+        "val2": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "val3": pd.Series([3333], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_multiple_data_stores_math(value_store, another_value_store):
@@ -621,15 +615,15 @@ def test_multiple_data_stores_math(value_store, another_value_store):
     value = resolver.resolve(specs)
 
     expected = {
-        "sumitall": 3335,
+        "sumitall": pd.Series([3335], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_multiple_data_stores_tag_name_sum(value_store, another_value_store):
     specs = {
-        "A2": Tag("A2"),
-        "A3": Tag("A3", "alt_fetch"),
+        "val2": Tag("A2"),
+        "val3": Tag("A3", "alt_fetch"),
         "sumitall": Tag("A2") + Tag("A3", "alt_fetch"),
     }
 
@@ -637,11 +631,11 @@ def test_multiple_data_stores_tag_name_sum(value_store, another_value_store):
     value = resolver.resolve(specs)
 
     expected = {
-        "A2": 2,
-        "A3": 3333,
-        "sumitall": 3335,
+        "val2": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "val3": pd.Series([3333], index=pd.DatetimeIndex([now])),
+        "sumitall": pd.Series([3335], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_multiple_data_stores_same_tag(value_store, another_value_store):
@@ -655,17 +649,17 @@ def test_multiple_data_stores_same_tag(value_store, another_value_store):
     value = resolver.resolve(specs)
 
     expected = {
-        "value_2": 2,
-        "value_3": 3,
-        "sumitall": 3335,
+        "value_2": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "value_3": pd.Series([3], index=pd.DatetimeIndex([now])),
+        "sumitall": pd.Series([3335], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_multiple_data_stores_same_tag2(value_store, another_value_store):
     specs = {
-        "A2": Tag("A2"),
-        "A3": Tag("A3", "alt_fetch"),
+        "val2": Tag("A2"),
+        "val3": Tag("A3", "alt_fetch"),
         "sumitall": Tag("A2") + Tag("A3"),
     }
 
@@ -673,11 +667,11 @@ def test_multiple_data_stores_same_tag2(value_store, another_value_store):
     value = resolver.resolve(specs)
 
     expected = {
-        "A2": 2,
-        "A3": 3333,
-        "sumitall": 5,
+        "val2": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "val3": pd.Series([3333], index=pd.DatetimeIndex([now])),
+        "sumitall": pd.Series([5], index=pd.DatetimeIndex([now])),
     }
-    assert value == expected
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_reuse_known_tags():
@@ -685,26 +679,24 @@ def test_reuse_known_tags():
         "value_2": Tag("A2"),
     }
 
-    def retrieve(tags):
-        return point_at_time(
-            client="mock_client",
-            at_time="mock_end",
-            lookbehind_start_time="mock_start",
-        )(tags)
+    from cognite_synthetic_tags import CDFStore
 
-    with patch(
-        "cognite_synthetic_tags.data_stores.retrieve_datapoints_df"
-    ) as p_retrieve_dp_df:
-        p_retrieve_dp_df.return_value = pd.DataFrame({"A2": 2}, index=[0])
-        resolver = TagResolver(retrieve)
+    with patch("cognite_synthetic_tags.data_stores.CDFStore.get") as p_get:
+        p_get.return_value = {"A2": pd.Series([2], index=[0])}
+        resolver = TagResolver(CDFStore(None))
         value = resolver.resolve(specs)
 
-        assert value == {"value_2": 2}
-        assert p_retrieve_dp_df.call_count == 1
+        assert_frame_equal(
+            pd.DataFrame(value),
+            pd.DataFrame({"value_2": 2}, index=[0]),
+        )
+        assert p_get.call_count == 1
 
         specs2 = {"value_22": Tag("A2") * 11}
         value2 = resolver.resolve(specs2)
-        p_retrieve_dp_df.return_value = 22
 
-        assert value2 == {"value_22": 22}
-        assert p_retrieve_dp_df.call_count == 1  # no new calls!
+        assert_frame_equal(
+            pd.DataFrame(value2),
+            pd.DataFrame({"value_22": 22}, index=[0]),
+        )
+        assert p_get.call_count == 1  # no new calls!

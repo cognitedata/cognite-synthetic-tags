@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, cast
+from datetime import datetime
+from typing import Any, Dict, Iterable, List, Set, Tuple, cast
 
 import pandas as pd
 
 from cognite_synthetic_tags import Tag
 from cognite_synthetic_tags._operations import DEFAULT_OPERATIONS
+from cognite_synthetic_tags.data_stores import Store
 from cognite_synthetic_tags.types import (
     OperationT,
     TagFormulaT,
     TagResolverContextT,
     TagSpecsT,
-    TagValueStoreT,
     TagValueT,
 )
 
@@ -40,13 +41,13 @@ class TagResolver:
 
     def __init__(
         self,
-        value_store: TagValueStoreT,
+        value_store: Store,
         additional_operations=None,
-        **additional_stores: TagValueStoreT,
+        **additional_stores: Store,
     ):
         self.context: TagResolverContextT = {}
         self._default_store_key = "value_store"
-        self.data_stores: Dict[str, TagValueStoreT] = {
+        self.data_stores: Dict[str, Store] = {
             self._default_store_key: value_store,
             **additional_stores,
         }
@@ -65,6 +66,7 @@ class TagResolver:
          * Perform calculations according to tag formulas (e.g. actually do
            the multiplication by 2 in the example above).
         """
+        spec_keys = list(specs.keys())
         # extract any literal values from the specs:
         specs, literals = self._extract_literals_from_specs(specs)
 
@@ -97,61 +99,62 @@ class TagResolver:
             real_tags[store_key] -= known_tags
 
         # fetch all the data from CDF:
-        default_index = None
         for store_key, store_tags in real_tags.items():
+
+            if not store_tags:
+                continue
+
+            # ensure there are no reused names:
+            #   (we don't allow using tag names for keys in specs)
+            for key in store_tags:
+                if key in spec_keys:
+                    raise ValueError(
+                        f"Duplicate definition"
+                        f" (tag names used as key in specs): {key}"
+                    )
+
             # actually finally call the data store:
             #   (data stores are functions form `data_stores` module, see there
             #   for details)
-            values, index = self.data_stores[store_key](store_tags)
-
-            # ensure there are no crazy duplicate names:
-            #   (names for non-default store have the store name appended,
-            #   so it would be really weird to hit duplicates here, so blow up)
-            for key, val in values.items():
-                if key in self.context:
-                    raise ValueError(
-                        f"Duplicate definition (multiple stores): {key}"
-                    )
-
-            # if the data store returns some series, transform all values in the
-            # `values` dict are instances of `pd.Series` as well:
-            values = self._make_series_in_dict(values, index)
+            values = self.data_stores[store_key].get(store_tags)
 
             # add the values to context:
             #   (to be used later in `self._resolve_formula`)
             self.context.update(values)
 
-            # remember index of the default store, to transform literals below:
-            if store_key == self._default_store_key:
-                default_index = index
+        # add literals back:
+        self.context.update(literals)
 
-        # transform literals according to the default data store:
-        #   (if the default store returns series, transform literals to match)
-        literals = self._make_series_in_dict(literals, default_index)
+        # if the data store returns some series, transform all values in the
+        # `values` dict are instances of `pd.Series` as well:
+        self.context = self._make_series_in_dict(self.context)
 
         # at long last, perform the actual calculations according to the tag
         # specs, and start filling up the results dict:
         results = {}
-        for key, tag in specs.items():
-            if tag.name in self.context:
+        for key in spec_keys:
+            if key in self.context:
                 # this name is already in context, so just use that:
                 #   (for simple tags with no formula and also for
                 #   already-calculated formulas when calling `resolve` again)
-                results[key] = self.context[tag.name]
+                results[key] = self.context[key]
             else:
-                # tag must have a formula here, otherwise it wold have been
-                # fetched directly by the store and already part of the context:
-                assert tag.formula is not None
-                # perform calculations according to the formula:
-                resolved_value = self._resolve_formula(tag.formula)
-                # add to context so that we have it for repeated calls to
-                # `self.resolve`:
-                self.context[tag.name] = resolved_value
-                # and add it to the return value:
-                results[key] = resolved_value
-
-        # add the literal values back into the results:
-        results.update(literals)
+                # key must be a real tag in specs:
+                assert key in specs
+                tag = specs[key]
+                if tag.name in self.context:
+                    results[key] = self.context[tag.name]
+                else:
+                    # tag must have a formula here, otherwise it wold have been
+                    # fetched directly by the store and already in the context:
+                    assert tag.formula is not None
+                    # perform calculations according to the formula:
+                    resolved_value = self._resolve_formula(tag.formula)
+                    # add to context so that we have it for repeated calls to
+                    # `self.resolve`:
+                    self.context[tag.name] = resolved_value
+                    # and add it to the return value:
+                    results[key] = resolved_value
 
         return results
 
@@ -238,21 +241,18 @@ class TagResolver:
             operation = self.operations[operator_]
 
         # apply the operator to the operands:
-        uniform_operands, series_index = self._make_series(operands)
-        if series_index is not None:
-            # some operands are instance of `pd.Series`, we need to
-            # apply the operation element-wise
-            values_series: Iterable[pd.Series] = uniform_operands
-            result = pd.Series(
-                (
-                    operation(*[series[i] for series in values_series])
-                    for i in series_index
-                ),
-                index=series_index,
-            )
-        else:
-            # all operands are just numbers, apply the operation directly
-            result = operation(*uniform_operands)
+        uniform_operands = self._make_series(operands)
+        # ...do it manually so that we support all possible operations
+        # ...(this is slower, but supports things like string manipulation)
+        # ... TODO consider making a FastTagResolver ?
+        values_series: List[pd.Series] = uniform_operands
+        result = pd.Series(
+            (
+                operation(*[series[i] for series in values_series])
+                for i in values_series[0].index
+            ),
+            index=values_series[0].index,
+        )
 
         return result
 
@@ -274,9 +274,7 @@ class TagResolver:
         return new_specs, literals
 
     @staticmethod
-    def _make_series(
-        data: Iterable[TagValueT],
-    ) -> Tuple[Iterable[TagValueT], Optional[pd.Index]]:
+    def _make_series(data: Iterable[TagValueT]) -> List[TagValueT]:
         """
         Take a list of values, and if any of the items is a `pd.Series`
         instance, change other values into `pd.Series` as well.
@@ -289,7 +287,7 @@ class TagResolver:
             val for val in data if isinstance(val, pd.Series)
         ]
         if not series:
-            return data, None
+            series = [pd.Series(index=pd.DatetimeIndex([datetime.utcnow()]))]
 
         # check that all series have the same indexes:
         #   (all are returned from the same CDF API call, so they should)
@@ -304,21 +302,14 @@ class TagResolver:
             for val in data
         ]
 
-        return all_series, index
+        return all_series
 
     @staticmethod
-    def _make_series_in_dict(
-        data: TagResolverContextT,
-        index: pd.Index,
-    ) -> TagResolverContextT:
+    def _make_series_in_dict(data: TagResolverContextT) -> TagResolverContextT:
         """
         Make sure that all values in the dict are `pd.Series` instances if the
         index is a `pd.Index`.
         """
-        if index is not None:
-            data["__dummy_series__"] = pd.Series({}, index=index)
-            # TODO ^^ Yeah, it's a magic string...  ¯\_(ツ)_/¯
-            series_or_values, _ = TagResolver._make_series(data.values())
-            data = dict(zip(data.keys(), series_or_values))
-            del data["__dummy_series__"]
+        series = TagResolver._make_series(data.values())
+        data = dict(zip(data.keys(), series))
         return data

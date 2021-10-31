@@ -1,17 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Callable, Dict, List, Set, Tuple, Union
 
 import pandas as pd
 from mypy_extensions import VarArg
@@ -28,8 +18,7 @@ TagValueT = Union[str, float, pd.Series]  # note: np.nan is subtype of float
 # internal:
 TagSpecsT = Dict[str, "Tag"]  # unresolved specs
 TagResolverContextT = Dict[str, TagValueT]  # resolved values
-TagValueStoreResultT = Tuple[TagResolverContextT, Optional[pd.Index]]
-TagValueStoreT = Callable[[Iterable[str]], TagValueStoreResultT]  # API call
+TagValueStoreResultT = TagResolverContextT
 
 OperationT = Callable[[VarArg(TagValueT)], TagValueT]
 OperatorT = Union[OperationT, str]

@@ -1,52 +1,68 @@
-from typing import Iterable
+from datetime import datetime
 
 import pandas as pd
 import pytest
 
-from cognite_synthetic_tags.types import (
-    TagResolverContextT,
-    TagValueStoreResultT,
-)
+from cognite_synthetic_tags.types import TagResolverContextT
 
 __all__ = [
     "value_store",
     "another_value_store",
     "series_value_store",
-    "dummy_value_store",
+    "USE_REAL_CLIENT",
+    "assert_called_once_with",
 ]
 
 
-def dummy_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
+USE_REAL_CLIENT = False
+# USE_REAL_CLIENT = True
+
+now = datetime.now()
+
+
+def assert_called_once_with(func_mock, *args, **kwargs):
+    if USE_REAL_CLIENT:
+        return
+    func_mock.assert_called_once_with(*args, **kwargs)
+
+
+class DummyValueStore:
     """
     Value store for tests. Very dumb, returns int value ignoring any letters
     in the tag name, e.g:
-    A1 -> 1
-    C42 -> 42
-    XY543--21ZZZ -> 54321
+    A1 -> Series([1])
+    C42 -> Series([42])
+    XY543--21ZZZ -> Series([54321])
     """
-    result: TagResolverContextT = {}
-    for tag_name in tag_names:
-        value = int("".join(filter(str.isdigit, tag_name)))
-        result[tag_name] = value
-    return result, None
+
+    def get(self, tag_names):
+        result: TagResolverContextT = {}
+        for tag_name in tag_names:
+            value = int("".join(filter(str.isdigit, tag_name)))
+            result[tag_name] = pd.Series(value, index=pd.DatetimeIndex([now]))
+        return result
 
 
-def dummy_another_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
+class DummyAnotherValueStore:
     """
     Value store for tests. Very dumb, returns int value multipllied by 1111,
     ignoring the initial digit, e.g:
-    A1 -> 1111
-    C42 -> 46662
-    X80 -> 88880
+    A1 -> Series([1111])
+    C42 -> Series([46662])
+    X80 -> Series([88880])
     """
-    result: TagResolverContextT = {}
-    for tag_name in tag_names:
-        value = int("".join(dig for dig in tag_name if dig.isdigit()))
-        result[tag_name] = value * 1111
-    return result, None
+
+    def get(self, tag_names):
+        result: TagResolverContextT = {}
+        for tag_name in tag_names:
+            value = (
+                int("".join(dig for dig in tag_name if dig.isdigit())) * 1111
+            )
+            result[tag_name] = pd.Series(value, index=pd.DatetimeIndex([now]))
+        return result
 
 
-def dummy_series_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
+class DummySeriesValueStore:
     """
     Value store for tests. Very dumb, returns series of 7 int values,
     ignoring any letters in the tag name is (e.g. from 42 for tag "ABC42")
@@ -55,36 +71,36 @@ def dummy_series_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
     C42 -> Series([42, 43, 44, 45, 46, 47, 48])
     X96 -> Series([96, 97, 98, 99, 0, 1, 2])
     """
-    result: TagResolverContextT = {}
-    for tag_name in tag_names:
-        start_value = int("".join(dig for dig in tag_name if dig.isdigit()))
-        values = [start_value + i for i in range(7)]
-        values = [val - 100 if val >= 100 else val for val in values]
-        result[tag_name] = pd.Series(values)
-    return result, pd.RangeIndex(7)
+
+    def get(self, tag_names):
+        result: TagResolverContextT = {}
+        for tag_name in tag_names:
+            start_value = int("".join(dig for dig in tag_name if dig.isdigit()))
+            values = [start_value + i for i in range(7)]
+            values = [val - 100 if val >= 100 else val for val in values]
+            result[tag_name] = pd.Series(values, index=range(7))
+        return result
 
 
 @pytest.fixture
 def value_store(mocker):
-    from . import utils
-
-    dummy_value_store_spy = mocker.spy(utils, "dummy_value_store")
-    return dummy_value_store_spy
+    store = DummyValueStore()
+    spy = mocker.spy(store, "get")
+    store.get = spy
+    return store
 
 
 @pytest.fixture
 def another_value_store(mocker):
-    from . import utils
-
-    dummy_another_value_store_spy = mocker.spy(
-        utils, "dummy_another_value_store"
-    )
-    return dummy_another_value_store_spy
+    store = DummyAnotherValueStore()
+    spy = mocker.spy(store, "get")
+    store.get = spy
+    return store
 
 
 @pytest.fixture
 def series_value_store(mocker):
-    from . import utils
-
-    dummy_value_store_spy = mocker.spy(utils, "dummy_series_value_store")
-    return dummy_value_store_spy
+    store = DummySeriesValueStore()
+    spy = mocker.spy(store, "get")
+    store.get = spy
+    return store
