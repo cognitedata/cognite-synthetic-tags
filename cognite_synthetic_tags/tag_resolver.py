@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, cast
 
 import pandas as pd
 
@@ -238,11 +238,11 @@ class TagResolver:
             operation = self.operations[operator_]
 
         # apply the operator to the operands:
-        operands, series_index = self._make_series(operands)
+        uniform_operands, series_index = self._make_series(operands)
         if series_index is not None:
             # some operands are instance of `pd.Series`, we need to
             # apply the operation element-wise
-            values_series: List[pd.Series] = operands  # keeping mypy happy
+            values_series: Iterable[pd.Series] = uniform_operands
             result = pd.Series(
                 (
                     operation(*[series[i] for series in values_series])
@@ -252,7 +252,7 @@ class TagResolver:
             )
         else:
             # all operands are just numbers, apply the operation directly
-            result = operation(*operands)
+            result = operation(*uniform_operands)
 
         return result
 
@@ -275,8 +275,8 @@ class TagResolver:
 
     @staticmethod
     def _make_series(
-        data: List[TagValueT],
-    ) -> Tuple[List[TagValueT], Optional[pd.Index]]:
+        data: Iterable[TagValueT],
+    ) -> Tuple[Iterable[TagValueT], Optional[pd.Index]]:
         """
         Take a list of values, and if any of the items is a `pd.Series`
         instance, change other values into `pd.Series` as well.
@@ -295,8 +295,7 @@ class TagResolver:
         #   (all are returned from the same CDF API call, so they should)
         index = series[0].index
         assert all(
-            single_series.index.identical(index)
-            for single_series in series[1:]
+            single_series.index.identical(index) for single_series in series[1:]
         ), "Series need to have the same index."
         # convert any non-series items to series:
         #   (repeat the item for every index)

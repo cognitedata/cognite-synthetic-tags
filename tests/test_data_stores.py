@@ -15,11 +15,13 @@ def mocked_client():
     p_retrieve = p_client.datapoints.retrieve.return_value
     p_retrieve.to_pandas.return_value = pd.DataFrame(
         {"houston.ro.REMOTE_AI[22]": [0.003925000131130218, np.nan, np.nan]},
-        index=pd.DatetimeIndex([
-            "2020-01-01T00:00:53",
-            "2020-01-01T00:00:54",
-            "2020-01-01T00:00:55",
-        ]),
+        index=pd.DatetimeIndex(
+            [
+                "2020-01-01T00:00:53",
+                "2020-01-01T00:00:54",
+                "2020-01-01T00:00:55",
+            ],
+        ),
     )
     return p_client
 
@@ -31,11 +33,13 @@ def patch_retrieve_datapoints_df(mocker):
     )
     p_retrieve_datapoints_df.return_value = pd.DataFrame(
         {"houston.ro.REMOTE_AI[22]": [0.003925000131130218, np.nan, np.nan]},
-        index=pd.DatetimeIndex([
-            "2020-01-01T00:00:53",
-            "2020-01-01T00:00:54",
-            "2020-01-01T00:00:55",
-        ]),
+        index=pd.DatetimeIndex(
+            [
+                "2020-01-01T00:00:53",
+                "2020-01-01T00:00:54",
+                "2020-01-01T00:00:55",
+            ],
+        ),
     )
     return p_retrieve_datapoints_df
 
