@@ -1,26 +1,28 @@
 from __future__ import annotations
 
+import operator
 from typing import Any, Optional
+
+import pandas as pd
+import sympy
+from sympy.categories import Object
 
 from ._operations import INFIX_OPERATORS
 from .types import OperatorT, TagFormulaT
 
 
-class Tag:
+class Tag(Object):
+    is_comparable = True
+
     def __init__(self, name: str, store: Optional[str] = None):
-        self.name = f"{name}__{store}" if store else name
         self.store = store
         self._value = None
-        self.formula: Optional[TagFormulaT] = None
-
-    def __str__(self) -> str:
-        return self.name
-
-    def __repr__(self):
-        return self.__str__()
+        self._result_processors = []
+        super().__init__()
 
     def calc(self, operator_: OperatorT, *args: Any) -> Tag:
-        return Tag.apply(operator_, self, *args)
+        self._result_processors.append((operator_, *args))
+        return self
 
     @classmethod
     def apply(cls, operator_: OperatorT, *args: Any) -> Tag:
@@ -38,109 +40,119 @@ class Tag:
         new_tag.formula = (operator_, args)
         return new_tag
 
+    def subs(self, *args, **kwargs):
+        result = super().subs(*args, **kwargs)
+        while self._result_processors:
+            func, *args = self._result_processors.pop()
+            if isinstance(result, pd.Series):
+                result = result.apply(func)  # TODO *args can contain other series
+            else:
+                result = func(result, *args)
+        return result
+
     # forward binary operations, e.g: Tag + 3
-
-    def __add__(self, other: Any) -> Tag:
-        return self.calc("+", other)
-
-    def __sub__(self, other: Any) -> Tag:
-        return self.calc("-", other)
-
-    def __mul__(self, other: Any) -> Tag:
-        return self.calc("*", other)
-
-    def __truediv__(self, other: Any) -> Tag:
-        return self.calc("/", other)
-
-    def __floordiv__(self, other: Any) -> Tag:
-        return self.calc("//", other)
-
-    def __mod__(self, other: Any) -> Tag:
-        return self.calc("%", other)
-
-    def __pow__(self, other: Any) -> Tag:
-        return self.calc("**", other)
-
-    def __or__(self, other: Any) -> Tag:
-        return self.calc("|", other)
-
-    def __and__(self, other: Any) -> Tag:
-        return self.calc("&", other)
-
-    def __xor__(self, other: Any) -> Tag:
-        return self.calc("^", other)
-
-    def __invert__(self) -> Tag:
-        return self.calc("not")
-
-    def __gt__(self, other: Any) -> Tag:
-        return self.calc("gt", other)
-
-    def __ge__(self, other: Any) -> Tag:
-        return self.calc("ge", other)
-
-    def __lt__(self, other: Any) -> Tag:
-        return self.calc("lt", other)
-
-    def __le__(self, other: Any) -> Tag:
-        return self.calc("le", other)
-
-    def __eq__(self, other: Any) -> Tag:  # type: ignore
-        return self.calc("eq", other)
-
-    def __ne__(self, other: Any) -> Tag:  # type: ignore
-        return self.calc("ne", other)
-
-    # reverse binary operations (e.g: 42 + Tag)
-
-    def __radd__(self, other: Any) -> Tag:
-        return self.calc("r+", other)
-
-    def __rsub__(self, other: Any) -> Tag:
-        return self.calc("r-", other)
-
-    def __rmul__(self, other: Any) -> Tag:
-        return self.calc("r*", other)
-
-    def __rtruediv__(self, other: Any) -> Tag:
-        return self.calc("r/", other)
-
-    def __rfloordiv__(self, other: Any) -> Tag:
-        return self.calc("r//", other)
-
-    def __rmod__(self, other: Any) -> Tag:
-        return self.calc("r%", other)
-
-    def __rpow__(self, other: Any) -> Tag:
-        return self.calc("r**", other)
-
-    def __ror__(self, other: Any) -> Tag:
-        return self.calc("r|", other)
-
-    def __rand__(self, other: Any) -> Tag:
-        return self.calc("r&", other)
-
-    def __rxor__(self, other: Any) -> Tag:
-        return self.calc("r^", other)
-
-    def __bool__(self):
-        """
-        To prevent Python from short-circuiting logic operations, Tag does not
-        support casting to boolean.
-
-        For example:
-          specs = {"status": Tag("A") or Tag("B")}
-        Here the value of specs["status"] will always be Tag("A"). This happens
-        be there is a chance to resolve the specs (i.e. the short-circuiting
-        happens on the line of code in the example).
-        """
-        raise UnsupportedOperationError()
-
+    #
+    # def __add__(self, other: Any) -> Tag:
+    #     return self.calc("+", other)
+    #
+    # def __sub__(self, other: Any) -> Tag:
+    #     return self.calc("-", other)
+    #
+    # def __mul__(self, other: Any) -> Tag:
+    #     return self.calc("*", other)
+    #
+    # def __truediv__(self, other: Any) -> Tag:
+    #     return self.calc("/", other)
+    #
+    # def __floordiv__(self, other: Any) -> Tag:
+    #     return self.calc("//", other)
+    #
+    # def __mod__(self, other: Any) -> Tag:
+    #     return self.calc("%", other)
+    #
+    # def __pow__(self, other: Any) -> Tag:
+    #     return self.calc("**", other)
+    #
+    # def __or__(self, other: Any) -> Tag:
+    #     return self.calc("|", other)
+    #
+    # def __and__(self, other: Any) -> Tag:
+    #     return self.calc("&", other)
+    #
+    # def __xor__(self, other: Any) -> Tag:
+    #     return self.calc("^", other)
+    #
+    # def __invert__(self) -> Tag:
+    #     return self.calc("not")
+    #
+    # def __gt__(self, other: Any) -> Tag:
+    #     return self.calc("gt", other)
+    #
+    # def __ge__(self, other: Any) -> Tag:
+    #     return self.calc("ge", other)
+    #
+    # def __lt__(self, other: Any) -> Tag:
+    #     return self.calc("lt", other)
+    #
+    # def __le__(self, other: Any) -> Tag:
+    #     return self.calc("le", other)
+    #
+    # def __eq__(self, other: Any) -> Tag:  # type: ignore
+    #     return self.calc("eq", other)
+    #
+    # def __ne__(self, other: Any) -> Tag:  # type: ignore
+    #     return self.calc("ne", other)
+    #
+    # # reverse binary operations (e.g: 42 + Tag)
+    #
+    # def __radd__(self, other: Any) -> Tag:
+    #     return self.calc("r+", other)
+    #
+    # def __rsub__(self, other: Any) -> Tag:
+    #     return self.calc("r-", other)
+    #
+    # def __rmul__(self, other: Any) -> Tag:
+    #     return self.calc("r*", other)
+    #
+    # def __rtruediv__(self, other: Any) -> Tag:
+    #     return self.calc("r/", other)
+    #
+    # def __rfloordiv__(self, other: Any) -> Tag:
+    #     return self.calc("r//", other)
+    #
+    # def __rmod__(self, other: Any) -> Tag:
+    #     return self.calc("r%", other)
+    #
+    # def __rpow__(self, other: Any) -> Tag:
+    #     return self.calc("r**", other)
+    #
+    # def __ror__(self, other: Any) -> Tag:
+    #     return self.calc("r|", other)
+    #
+    # def __rand__(self, other: Any) -> Tag:
+    #     return self.calc("r&", other)
+    #
+    # def __rxor__(self, other: Any) -> Tag:
+    #     return self.calc("r^", other)
+    #
+    # def __bool__(self):
+    #     """
+    #     To prevent Python from short-circuiting logic operations, Tag does not
+    #     support casting to boolean.
+    #
+    #     For example:
+    #       specs = {"status": Tag("A") or Tag("B")}
+    #     Here the value of specs["status"] will always be Tag("A"). This happens
+    #     be there is a chance to resolve the specs (i.e. the short-circuiting
+    #     happens on the line of code in the example).
+    #     """
+    #     raise UnsupportedOperationError()
+    #
     def bool(self) -> Tag:
-        return self.calc("bool")
+        return self.calc(lambda x: bool(x))
 
     def bool_not(self) -> Tag:
-        return self.calc("not")
+        return self.calc(lambda x: not bool(x))
 
 
 class UnsupportedOperationError(ValueError):

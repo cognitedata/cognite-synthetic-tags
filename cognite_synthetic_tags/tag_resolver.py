@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, cast
 
 import pandas as pd
+import sympy.core
 
 from cognite_synthetic_tags import Tag
 from cognite_synthetic_tags._operations import DEFAULT_OPERATIONS
@@ -75,26 +76,24 @@ class TagResolver:
         self._specs = specs
         real_tags = defaultdict(set)
         for key, tag in specs.items():
-            if tag.formula:
-                # dig into the formula recursively
-                tags = self._collect_tags_from_formula(key, tag.formula)
-                for store_key, store_tags in tags.items():
-                    real_tags[store_key].update(store_tags)
-            else:
-                # no formula, it's just a tag name
-                store_key = self._get_item_value_store(tag)
-                real_tags[store_key].add(tag.name)
-                # TODO this branch is present in _collect_tags_from_formula too.
-                #  Should refactor it so that both branches are handled there.
+            for sym in tag.expr_free_symbols:
+                if not sym.is_number:
+                    store_key = self._get_item_value_store(sym)
+                    real_tags[store_key].add(sym)
+            for sym in getattr(tag, "bound_symbols", []):
+                if not sym.is_number:
+                    store_key = self._get_item_value_store(sym)
+                    real_tags[store_key].add(sym)
 
         # remove known values from query these can be:
         #  - literals, they are already in context,
         #  - previously fetch or calculated tags (basically caching, only
         #    relevant when calling `resolve` more then once with a single
-        #    `TagResolver` instance).
-        for store_key, store_tags in real_tags.items():
-            known_tags = store_tags & set(self.context.keys())
-            real_tags[store_key] -= known_tags
+        #    `TagResolver` instance).đ
+        ###TODO restore:
+        # for store_key, store_tags in real_tags.items():
+        #     known_tags = store_tags & set(self.context.keys())
+        #     real_tags[store_key] -= known_tags
 
         # fetch all the data from CDF:
         default_index = None
@@ -102,7 +101,9 @@ class TagResolver:
             # actually finally call the data store:
             #   (data stores are functions form `data_stores` module, see there
             #   for details)
-            values, index = self.data_stores[store_key](store_tags)
+            values, index = self.data_stores[store_key](
+                {tag.name for tag in store_tags}
+            )
 
             # ensure there are no crazy duplicate names:
             #   (names for non-default store have the store name appended,
@@ -132,23 +133,31 @@ class TagResolver:
         # at long last, perform the actual calculations according to the tag
         # specs, and start filling up the results dict:
         results = {}
+        subs = {
+            tag: self.context[tag.name]
+            for store in self.data_stores.keys()
+            for tag in real_tags[store]
+
+        }
         for key, tag in specs.items():
-            if tag.name in self.context:
-                # this name is already in context, so just use that:
-                #   (for simple tags with no formula and also for
-                #   already-calculated formulas when calling `resolve` again)
-                results[key] = self.context[tag.name]
+            # this name is already in context, so just use that:
+            #   (for simple tags with no formula and also for
+            #   already-calculated formulas when calling `resolve` again)
+            if isinstance(tag, sympy.Function):
+                results[key] = tag([subs[s] for s in tag.bound_symbols])
             else:
-                # tag must have a formula here, otherwise it wold have been
-                # fetched directly by the store and already part of the context:
-                assert tag.formula is not None
-                # perform calculations according to the formula:
-                resolved_value = self._resolve_formula(tag.formula)
-                # add to context so that we have it for repeated calls to
-                # `self.resolve`:
-                self.context[tag.name] = resolved_value
-                # and add it to the return value:
-                results[key] = resolved_value
+                results[key] = tag.subs(subs)
+            # else:
+            #     # tag must have a formula here, otherwise it wold have been
+            #     # fetched directly by the store and already part of the context:
+            #     assert tag.formula is not None
+            #     # perform calculations according to the formula:
+            #     resolved_value = self._resolve_formula(tag.formula)
+            #     # add to context so that we have it for repeated calls to
+            #     # `self.resolve`:
+            #     self.context[tag.name] = resolved_value
+            #     # and add it to the return value:
+            #     results[key] = resolved_value
 
         # add the literal values back into the results:
         results.update(literals)
@@ -267,7 +276,7 @@ class TagResolver:
         new_specs: TagSpecsT = {}
         literals: TagResolverContextT = {}
         for key, value in specs.items():
-            if isinstance(value, Tag):
+            if isinstance(value, (sympy.Basic, sympy.FunctionClass)):
                 new_specs[key] = value
             else:
                 literals[key] = value
