@@ -185,7 +185,7 @@ class TagResolver:
         return tags
 
     def _get_item_value_store(self, item: Any) -> str:
-        store_key = getattr(item, "store", self._default_store_key)
+        store_key = getattr(item, "store", None) or self._default_store_key
         if store_key not in self.data_stores:
             raise ValueError(
                 f"Unknown value store '{store_key}' for tag '{item}'."
@@ -294,10 +294,10 @@ class TagResolver:
         # check that all series have the same indexes:
         #   (all are returned from the same CDF API call, so they should)
         index = series[0].index
-        for single_series in series[1:]:
-            assert all(
-                single_series.index.identical(index)
-            ), "Series need to have the same index."
+        assert all(
+            single_series.index.identical(index)
+            for single_series in series[1:]
+        ), "Series need to have the same index."
         # convert any non-series items to series:
         #   (repeat the item for every index)
         all_series: List[pd.Series] = [
