@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from ._operations import INFIX_OPERATORS
+from ._operations import INFIX_OPERATORS, REVERSE_OPERATIONS
 from .types import OperatorT, TagFormulaT
 
 
@@ -27,12 +27,14 @@ class Tag:
         if callable(operator_):
             oper_str = operator_.__name__
         else:
-            oper_str = str(operator_)
-            if oper_str.startswith("r"):
+            assert isinstance(operator_, str), f"Invalid operator: {operator_}"
+            if operator_ in REVERSE_OPERATIONS:
+                operator_ = operator_[1:]
                 args = args[::-1]
+            oper_str = operator_
         if oper_str in INFIX_OPERATORS:
             oper_str = INFIX_OPERATORS[oper_str]
-            new_tag = Tag(f"{f' {oper_str} '.join(map(str, args))}")
+            new_tag = Tag(f" {oper_str} ".join(map(str, args)))
         else:
             new_tag = Tag(f"{oper_str}({', '.join(map(str, args))})")
         new_tag.formula = (operator_, args)

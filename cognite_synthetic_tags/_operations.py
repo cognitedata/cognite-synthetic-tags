@@ -5,7 +5,6 @@ from typing import Callable, Dict
 
 # https://docs.python.org/3/library/operator.html
 DEFAULT_OPERATIONS: Dict[str, Callable] = {
-    # binary:
     "+": operator.add,
     "-": operator.sub,
     "*": operator.mul,
@@ -13,31 +12,32 @@ DEFAULT_OPERATIONS: Dict[str, Callable] = {
     "//": operator.floordiv,
     "%": operator.mod,
     "**": operator.pow,
-    # boolean logic (using bitwise operators):
-    "&": lambda a, b: bool(a) and bool(b),
-    "|": lambda a, b: bool(a) or bool(b),
-    "^": lambda a, b: bool(a) != bool(b),
-    "not": lambda a: not bool(a),  # ~
+    "&": lambda a, b: operator.and_(bool(a), bool(b)),
+    "|": lambda a, b: operator.or_(bool(a), bool(b)),
+    "^": lambda a, b: operator.xor(bool(a), bool(b)),
+    "not": lambda a: operator.not_(bool(a)),  # ~
     "bool": lambda a: bool(a),  # no bitwise operator, only Tag.bool()
-    # comparisons:
-    "gt": lambda a, b: a > b,
-    "ge": lambda a, b: a >= b,
-    "lt": lambda a, b: a < b,
-    "le": lambda a, b: a <= b,
-    "eq": lambda a, b: a == b,
-    "ne": lambda a, b: a != b,
-    # misc:
-    "r+": lambda a, b: a + b,
-    "r-": lambda a, b: a - b,
-    "r*": lambda a, b: b * a,
-    "r/": lambda a, b: a / b,
-    "r//": lambda a, b: a // b,
-    "r**": lambda a, b: a ** b,
-    "r%": lambda a, b: a % b,
-    "r&": lambda a, b: bool(a) and bool(b),
-    "r|": lambda a, b: bool(a) or bool(b),
-    "r^": lambda a, b: bool(a) != bool(b),
+    "gt": operator.gt,
+    "ge": operator.ge,
+    "lt": operator.lt,
+    "le": operator.le,
+    "eq": operator.eq,
+    "ne": operator.ne,
 }
+
+
+REVERSE_OPERATIONS = (
+    "r+",
+    "r-",
+    "r*",
+    "r/",
+    "r//",
+    "r**",
+    "r%",
+    "r&",
+    "r|",
+    "r^",
+)
 
 
 # This is for cosmetics only.
@@ -64,10 +64,4 @@ INFIX_OPERATORS = {
     "le": "≤",
     "eq": "=",
     "ne": "≠",
-    # reverse operations:
-    "r*": "×",
-    "r/": "∕",
-    "r//": "∕↓",
-    "r+": "+",
-    "r-": "-",
 }
