@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from contextlib import suppress
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import pandas as pd
@@ -186,7 +185,7 @@ class TagResolver:
         return tags
 
     def _get_item_value_store(self, item: Any) -> str:
-        store_key = getattr(item, "store", None) or self._default_store_key
+        store_key = getattr(item, "store", self._default_store_key)
         if store_key not in self.data_stores:
             raise ValueError(
                 f"Unknown value store '{store_key}' for tag '{item}'."
@@ -295,16 +294,14 @@ class TagResolver:
         # check that all series have the same indexes:
         #   (all are returned from the same CDF API call, so they should)
         index = series[0].index
-        for single_series in series:
+        for single_series in series[1:]:
             assert all(
-                single_series.index == index
+                single_series.index.identical(index)
             ), "Series need to have the same index."
         # convert any non-series items to series:
         #   (repeat the item for every index)
         all_series: List[pd.Series] = [
-            val
-            if isinstance(val, pd.Series)
-            else pd.Series([val] * len(index), index=index)
+            val if isinstance(val, pd.Series) else pd.Series(val, index=index)
             for val in data
         ]
 
@@ -322,7 +319,7 @@ class TagResolver:
         if index is not None:
             data["__dummy_series__"] = pd.Series({}, index=index)
             # TODO ^^ Yeah, it's a magic string...  ¯\_(ツ)_/¯
-            series_or_values, _ = TagResolver._make_series(list(data.values()))
+            series_or_values, _ = TagResolver._make_series(data.values())
             data = dict(zip(data.keys(), series_or_values))
             del data["__dummy_series__"]
         return data

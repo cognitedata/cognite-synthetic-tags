@@ -26,7 +26,7 @@ def dummy_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
     """
     result: TagResolverContextT = {}
     for tag_name in tag_names:
-        value = int("".join(dig for dig in tag_name if dig.isdigit()))
+        value = int("".join(filter(str.isdigit, tag_name)))
         result[tag_name] = value
     return result, None
 
@@ -61,7 +61,7 @@ def dummy_series_value_store(tag_names: Iterable[str]) -> TagValueStoreResultT:
         values = [start_value + i for i in range(7)]
         values = [val - 100 if val >= 100 else val for val in values]
         result[tag_name] = pd.Series(values)
-    return result, pd.Index(range(7))
+    return result, pd.RangeIndex(7)
 
 
 @pytest.fixture
