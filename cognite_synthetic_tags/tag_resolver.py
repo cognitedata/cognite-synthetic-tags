@@ -27,7 +27,7 @@ class TagResolver:
     ...     "value_1": Tag("A1"),
     ...     "value_2": Tag("A1") + Tag("B2") * Tag("B3"),
     ... }
-    >>> TagResolver(DummyValueStore()).resolve_latest(specs)
+    >>> TagResolver(DummyValueStore()).latest(specs)
     {'value_1': 1, 'value_2': 7}
 
     >>> specs = {
@@ -35,7 +35,7 @@ class TagResolver:
     ...     "value_2": Tag("A1") * 3 + Tag("B2") * 1000 * Tag("B3"),
     ...     "value_3": Tag("B2"),
     ... }
-    >>> TagResolver(DummyValueStore()).resolve_latest(specs)
+    >>> TagResolver(DummyValueStore()).latest(specs)
     {'value_1': 2, 'value_2': 6003, 'value_3': 2}
     """
 
@@ -56,7 +56,7 @@ class TagResolver:
         self._recursive_tags: List[Set[str]] = [set()]
         self._specs: TagSpecsT = {}
 
-    def resolve(self, specs: TagSpecsT) -> Dict[str, TagValueT]:
+    def series(self, specs: TagSpecsT) -> Dict[str, TagValueT]:
         """
         This is the heavy-lift method that does all the necessary steps:
          * Go through the `specs` dict and figure out all the tags that
@@ -92,7 +92,7 @@ class TagResolver:
         # remove known values from query these can be:
         #  - literals, they are already in context,
         #  - previously fetch or calculated tags (basically caching, only
-        #    relevant when calling `resolve` more then once with a single
+        #    relevant when calling `series` more then once with a single
         #    `TagResolver` instance).
         for store_key, store_tags in real_tags.items():
             known_tags = store_tags & set(self.context.keys())
@@ -136,7 +136,7 @@ class TagResolver:
             if key in self.context:
                 # this name is already in context, so just use that:
                 #   (for simple tags with no formula and also for
-                #   already-calculated formulas when calling `resolve` again)
+                #   already-calculated formulas when calling `series` again)
                 results[key] = self.context[key]
             else:
                 # key must be a real tag in specs:
@@ -158,12 +158,12 @@ class TagResolver:
 
         return results
 
-    def resolve_df(self, specs):
-        res = self.resolve(specs)
+    def df(self, specs):
+        res = self.series(specs)
         return pd.DataFrame(res)
 
-    def resolve_latest(self, specs):
-        df = self.resolve_df(specs)
+    def latest(self, specs):
+        df = self.df(specs)
         if len(df) == 0:
             return {}
         last = df.iloc[-1:]

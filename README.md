@@ -57,7 +57,7 @@ With **Synthetic Tags** this becomes:
 ...     "sum_of_2_things": Tag("THING_A") + Tag("THING_B"),
 ... }
 
->>> TagResolver(retrieval_function).resolve_latest(specs)
+>>> TagResolver(retrieval_function).latest(specs)
 {
     "some_valve": 42.0000123,
     "another_meter": 42000.456000,
@@ -78,7 +78,7 @@ It also supports function calls, either on multiple tags or on individual tags:
 
 
 `TagResolver` is where the actual call to the API happens, and where `Tag` instances are replaced with actual values
-and where math operations are performed. Besides `resolve_latest` there is also `resolve` and `resolve_df` (find more
+and where math operations are performed. Besides `latest` there is also `resolve` and `df` (find more
 info of all three below).
 
 
@@ -101,7 +101,7 @@ from CDF.
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc(galons_per_minute),
 ... }
 
->>> TagResolver(retrieval_function).resolve_latest(specs)
+>>> TagResolver(retrieval_function).latest(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
     "flow_in_galons_per_minute": 54.35604149,
@@ -125,7 +125,7 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 ...     "value_3": Tag("METER_C"),
 ...     "answer_to_everything": Tag.apply(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
->>> TagResolver(retrieval_function).resolve_latest(specs)
+>>> TagResolver(retrieval_function).latest(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -163,7 +163,7 @@ This feature can be used to address issues with importing Python modules, or to 
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc("galons_per_minute"),
 ... }
 
->>> TagResolver(retrieval_function, my_extension).resolve_latest(specs)
+>>> TagResolver(retrieval_function, my_extension).latest(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
     "flow_in_galons_per_minute": 54.35604149,
@@ -183,7 +183,7 @@ This feature can be used to address issues with importing Python modules, or to 
 ...     "answer_to_everything": Tag.apply("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
 
->>> TagResolver(retrieval_function, {"nearest_42": closest_to_42}).resolve_latest(specs)
+>>> TagResolver(retrieval_function, {"nearest_42": closest_to_42}).latest(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -194,17 +194,17 @@ This feature can be used to address issues with importing Python modules, or to 
 
 ### Caching and Combined API Calls
 
-Any call to `TagResolver.resolve_latest` (or `resolve_df` or `resolve`) will result in the minimum number of calls
+Any call to `TagResolver.latest` (or `df` or `resolve`) will result in the minimum number of calls
 to the API to retrieves all needed values.
 
 Each instance of `TagResolver` keeps internal cache and only queries the API for tags that are needed.
 
-In the next example with multiple calls to `resolve_latest()`, the CDF time series API endpoint is hit only once.
+In the next example with multiple calls to `latest()`, the CDF time series API endpoint is hit only once.
 
 ``` python
 >>> resolver = TagResolver(retrieval_function)
 
->>> resolver.resolve_latest({
+>>> resolver.latest({
 ...     "value_1": Tag("METER_A"),
 ...     "value_2": Tag("METER_B"),
 ...     "value_3": Tag("METER_C"),
@@ -214,13 +214,13 @@ In the next example with multiple calls to `resolve_latest()`, the CDF time seri
 ... })
 {"value_1": 12, "value_2": 23, "value_3": 34, "val_1_and_2": 35, "val_2_and_3": ...}
 
->>> resolver.resolve_latest({
+>>> resolver.latest({
 ...     "value_1": Tag("METER_A"),
 ...     "value_1_percent": 100 * Tag("METER_A") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
 {"value_1": 12, "value_1_percent": 17.3913043478}
 
->>> resolver.resolve_latest({
+>>> resolver.latest({
 ...     "value_2": Tag("METER_B"),
 ...     "value_2_percent": 100 * Tag("METER_B") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
@@ -230,9 +230,9 @@ In the next example with multiple calls to `resolve_latest()`, the CDF time seri
 
 #### Avoiding Cache
 
-In case that the caching is not desired (i.e. if we wanted to query CDF again in each of the three `resolve_latest()`
+In case that the caching is not desired (i.e. if we wanted to query CDF again in each of the three `latest()`
 calls above) we should create a new instance of `TagResolver` for each one (i.e. use
-`TagResolver(retrieval_function).resolve_latest` instead of `resolver.resolve_latest`).
+`TagResolver(retrieval_function).latest` instead of `resolver.latest`).
 
 
 ## Multi-value Lookups (Series)
@@ -256,7 +256,7 @@ another time series (or, indeed, the same one if desired):
 ``` python
 >>> resolver = TagResolver(get_series, average=get_average)
 
->>> resolver.resolve_latest({
+>>> resolver.latest({
 ...     "avg_value": Tag("METER_A", "average"),
 ...     "above_average": Tag("METER_A") > Tag("METER_A", "average"),
 ... })
@@ -395,19 +395,19 @@ Get your API key from https://openindustrialdata.com/get-started/
 >>> # single value (not very useful):
 >>> tag_resolver = TagResolver(get_latest)
 >>> specs = {"valve": Tag(VALVE_22)}
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'valve': 0.003925000131130218}
 ```
 ``` python
 >>> # simple multiplication:
 >>> specs = {"valve_percent": 100 * Tag(VALVE_22)}
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'valve_percent': 39.25000130113021085}
 ```
 ``` python
 >>> # apply a function to a value:
 >>> specs = {"valve_percent_int": (100 * Tag(VALVE_22)).calc(round)}
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'valve_percent_int': 39}
 ```
 
@@ -423,7 +423,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 ...     "pressure_diff": Tag(METER_A) - Tag(METER_B),
 ...     "p1_percent": Tag(METER_A) / (Tag(METER_A) + Tag(METER_B)) * 100,
 ... }
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'pressure_1': 1.4,
  'pressure_2': 35.8,
  'pressure_diff': -34.4,
@@ -435,7 +435,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 ``` python
 >>> specs = {"valve": Tag(VALVE_22)}
 >>> tag_resolver = TagResolver(get_series)
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'valve': 2021-06-16 17:21:08    0.239425
           2021-06-16 17:21:09    1.350200
           2021-06-16 17:21:10    2.743576
@@ -465,7 +465,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 ...     "pressure": Tag(METER_A),
 ...     "pressure_md5": Tag(METER_B).calc("md5"),
 ... }
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'pressure': 4.15, 'pressure_md5': '7fd3...'}
 ```
 
@@ -486,7 +486,7 @@ Get your API key from https://openindustrialdata.com/get-started/
 ..          / Tag.apply("sum", Tag(METER_A), Tag(METER_B), Tag(METER_C))
 ...     ),
 ... }
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'pressure_1': 30.95,
  'pressure_2': 19.1,
  'pressure_3': 20.05,
@@ -515,7 +515,7 @@ function passed to `TagResolver`: `get_series` in this example vs `get_latest` i
 ..          / Tag.apply("sum", Tag(METER_A), Tag(METER_B), Tag(METER_C))
 ...     ),
 ... }
->>> tag_resolver.resolve(specs)
+>>> tag_resolver.series(specs)
 {'pressure_1': 2021-06-16 17:23:37    48.30
                2021-06-16 17:23:38    48.25
                2021-06-16 17:23:39    48.15
@@ -554,7 +554,7 @@ This is a natural fit for series results, e.g:
 
 ``` python
 >>> # ...continuing from the previous example
->>> data = tag_resolver.resolve(specs)
+>>> data = tag_resolver.series(specs)
 >>> pd.DataFrame(data)
                      pressure_1  pressure_2  pressure_3  pressure_highest  highest_to_total_ratio
 2021-06-16 17:42:50       49.65       39.55      139.10            139.10                0.609286
@@ -587,7 +587,7 @@ in addition to the data dict:
 ...     "above_average": Tag(METER_A) > Tag(METER_A, "average"),
 ... }
 >>> resolver = TagResolver(get_series, average=get_average)
->>> resolver.resolve(specs)
+>>> resolver.series(specs)
 {
     "avg_value": 42,
     "above_average: <pd.Series of bool values, True for points that are above 42, False for others>,
