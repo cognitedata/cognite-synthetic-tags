@@ -522,9 +522,7 @@ def test_series_math_stuff(series_value_store):
         "is_even": lambda a: a % 2 == 0,
     }
 
-    value = TagResolver(series_value_store, additional_operations).series(
-        specs
-    )
+    value = TagResolver(series_value_store, additional_operations).series(specs)
 
     expected = {
         "A3_combined": pd.Series([98, 98, -2, -2, -2, -2, -2]),
