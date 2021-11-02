@@ -700,3 +700,34 @@ def test_reuse_known_tags():
             pd.DataFrame({"value_22": 22}, index=[0]),
         )
         assert p_get.call_count == 1  # no new calls!
+
+
+def test_resolve_last_single_value(value_store):
+    specs = {
+        "value_1": Tag("A1"),
+    }
+
+    value = TagResolver(value_store).resolve_latest(specs)
+
+    expected = {"value_1": 1}
+    assert value == expected
+
+
+def test_resolve_last_empty(value_store):
+    specs = {}
+
+    value = TagResolver(value_store).resolve_latest(specs)
+
+    expected = {}
+    assert value == expected
+
+
+def test_resolve_last_multiple(series_value_store):
+    specs = {
+        "value_1": Tag("A1"),
+    }
+
+    value = TagResolver(series_value_store).resolve_latest(specs)
+
+    expected = {"value_1": 7}
+    assert value == expected

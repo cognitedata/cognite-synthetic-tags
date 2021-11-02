@@ -57,7 +57,7 @@ With **Synthetic Tags** this becomes:
 ...     "sum_of_2_things": Tag("THING_A") + Tag("THING_B"),
 ... }
 
->>> TagResolver(retrieval_function).resolve(specs)
+>>> TagResolver(retrieval_function).resolve_latest(specs)
 {
     "some_valve": 42.0000123,
     "another_meter": 42000.456000,
@@ -78,7 +78,8 @@ It also supports function calls, either on multiple tags or on individual tags:
 
 
 `TagResolver` is where the actual call to the API happens, and where `Tag` instances are replaced with actual values
-and where math operations are performed.
+and where math operations are performed. Besides `resolve_latest` there is also `resolve` and `resolve_df` (find more
+info of all three below).
 
 
 
@@ -100,7 +101,7 @@ from CDF.
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc(galons_per_minute),
 ... }
 
->>> TagResolver(retrieval_function).resolve(specs)
+>>> TagResolver(retrieval_function).resolve_latest(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
     "flow_in_galons_per_minute": 54.35604149,
@@ -124,7 +125,7 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 ...     "value_3": Tag("METER_C"),
 ...     "answer_to_everything": Tag.apply(closest_to_42, Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
->>> TagResolver(retrieval_function).resolve(specs)
+>>> TagResolver(retrieval_function).resolve_latest(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -135,7 +136,7 @@ CDF, the callable will be applied (element-wise) with the tag values passed to i
 
 ##### `Tag.calc` is a Shorthand
 
-`Tag.calc` (not to be confused with `Tag.apply`) is provided as a convenience method and for a more readable syntax.
+`Tag.calc` is provided as a convenience method and for a more readable syntax.
 It is equivalent to `Tag.apply` with a single argument:
 
 ``` python
@@ -162,7 +163,7 @@ This feature can be used to address issues with importing Python modules, or to 
 ...     "flow_in_galons_per_minute": Tag("FLOW_METER.123").calc("galons_per_minute"),
 ... }
 
->>> TagResolver(retrieval_function, my_extension).resolve(specs)
+>>> TagResolver(retrieval_function, my_extension).resolve_latest(specs)
 {
     "flow_in_sm3_per_hour": 12.3456,
     "flow_in_galons_per_minute": 54.35604149,
@@ -182,7 +183,7 @@ This feature can be used to address issues with importing Python modules, or to 
 ...     "answer_to_everything": Tag.apply("nearest_42", Tag("METER_A"), Tag("METER_B"), Tag("METER_C")),
 ... }
 
->>> TagResolver(retrieval_function, {"nearest_42": closest_to_42}).resolve(specs)
+>>> TagResolver(retrieval_function, {"nearest_42": closest_to_42}).resolve_latest(specs)
 {
     "value_1": 11,
     "value_2": 44,
@@ -193,16 +194,17 @@ This feature can be used to address issues with importing Python modules, or to 
 
 ### Caching and Combined API Calls
 
-Any call to `TagResolver.resolve` will result in the minimum number of calls to the API to retrieves all needed values.
+Any call to `TagResolver.resolve_latest` (or `resolve_df` or `resolve`) will result in the minimum number of calls
+to the API to retrieves all needed values.
 
 Each instance of `TagResolver` keeps internal cache and only queries the API for tags that are needed.
 
-In the next example with multiple calls to `resolve()`, the CDF time series API endpoint is hit only once.
+In the next example with multiple calls to `resolve_latest()`, the CDF time series API endpoint is hit only once.
 
 ``` python
 >>> resolver = TagResolver(retrieval_function)
 
->>> resolver.resolve({
+>>> resolver.resolve_latest({
 ...     "value_1": Tag("METER_A"),
 ...     "value_2": Tag("METER_B"),
 ...     "value_3": Tag("METER_C"),
@@ -212,13 +214,13 @@ In the next example with multiple calls to `resolve()`, the CDF time series API 
 ... })
 {"value_1": 12, "value_2": 23, "value_3": 34, "val_1_and_2": 35, "val_2_and_3": ...}
 
->>> resolver.resolve({
+>>> resolver.resolve_latest({
 ...     "value_1": Tag("METER_A"),
 ...     "value_1_percent": 100 * Tag("METER_A") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
 {"value_1": 12, "value_1_percent": 17.3913043478}
 
->>> resolver.resolve({
+>>> resolver.resolve_latest({
 ...     "value_2": Tag("METER_B"),
 ...     "value_2_percent": 100 * Tag("METER_B") / (Tag("METER_A") + Tag("METER_B") + Tag("METER_C")),
 ... })
@@ -228,9 +230,9 @@ In the next example with multiple calls to `resolve()`, the CDF time series API 
 
 #### Avoiding Cache
 
-In case that the caching is not desired (i.e. if we wanted to query CDF again in each of the three `resolve()`
+In case that the caching is not desired (i.e. if we wanted to query CDF again in each of the three `resolve_latest()`
 calls above) we should create a new instance of `TagResolver` for each one (i.e. use
-`TagResolver(retrieval_function).resolve` instead of `resolver.resolve`).
+`TagResolver(retrieval_function).resolve_latest` instead of `resolver.resolve_latest`).
 
 
 ## Multi-value Lookups (Series)
@@ -254,7 +256,7 @@ another time series (or, indeed, the same one if desired):
 ``` python
 >>> resolver = TagResolver(get_series, average=get_average)
 
->>> resolver.resolve({
+>>> resolver.resolve_latest({
 ...     "avg_value": Tag("METER_A", "average"),
 ...     "above_average": Tag("METER_A") > Tag("METER_A", "average"),
 ... })

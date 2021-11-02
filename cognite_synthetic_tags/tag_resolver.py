@@ -22,12 +22,12 @@ class TagResolver:
     """
     Usage:
     >>> from cognite_synthetic_tags import Tag
-    >>> from tests.utils import dummy_value_store
+    >>> from tests.utils import DummyValueStore
     >>> specs = {
     ...     "value_1": Tag("A1"),
     ...     "value_2": Tag("A1") + Tag("B2") * Tag("B3"),
     ... }
-    >>> TagResolver(dummy_value_store).resolve(specs)
+    >>> TagResolver(DummyValueStore()).resolve_latest(specs)
     {'value_1': 1, 'value_2': 7}
 
     >>> specs = {
@@ -35,7 +35,7 @@ class TagResolver:
     ...     "value_2": Tag("A1") * 3 + Tag("B2") * 1000 * Tag("B3"),
     ...     "value_3": Tag("B2"),
     ... }
-    >>> TagResolver(dummy_value_store).resolve(specs)
+    >>> TagResolver(DummyValueStore()).resolve_latest(specs)
     {'value_1': 2, 'value_2': 6003, 'value_3': 2}
     """
 
@@ -157,6 +157,17 @@ class TagResolver:
                     results[key] = resolved_value
 
         return results
+
+    def resolve_df(self, specs):
+        res = self.resolve(specs)
+        return pd.DataFrame(res)
+
+    def resolve_latest(self, specs):
+        df = self.resolve_df(specs)
+        if len(df) == 0:
+            return {}
+        last = df.iloc[-1:]
+        return last.to_dict("records")[0]
 
     def _collect_tags_from_formula(
         self, key: str, formula: TagFormulaT
