@@ -116,7 +116,7 @@ class TagResolver:
             # actually finally call the data store:
             #   (data stores are functions form `data_stores` module, see there
             #   for details)
-            values = self.data_stores[store_key].get(store_tags)
+            values = self.data_stores[store_key](store_tags)
 
             # add the values to context:
             #   (to be used later in `self._resolve_formula`)

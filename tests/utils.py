@@ -42,6 +42,9 @@ class DummyValueStore:
             result[tag_name] = pd.Series(value, index=pd.DatetimeIndex([now]))
         return result
 
+    def __call__(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
+
 
 class DummyAnotherValueStore:
     """
@@ -60,6 +63,9 @@ class DummyAnotherValueStore:
             )
             result[tag_name] = pd.Series(value, index=pd.DatetimeIndex([now]))
         return result
+
+    def __call__(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
 
 
 class DummySeriesValueStore:
@@ -80,6 +86,9 @@ class DummySeriesValueStore:
             values = [val - 100 if val >= 100 else val for val in values]
             result[tag_name] = pd.Series(values, index=range(7))
         return result
+
+    def __call__(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
 
 
 @pytest.fixture

@@ -679,7 +679,7 @@ def test_reuse_known_tags():
 
     from cognite_synthetic_tags import CDFStore
 
-    with patch("cognite_synthetic_tags.data_stores.CDFStore.get") as p_get:
+    with patch("cognite_synthetic_tags.data_stores.CDFStore.__call__") as p_get:
         p_get.return_value = {"A2": pd.Series([2], index=[0])}
         resolver = TagResolver(CDFStore(None))
         value = resolver.series(specs)

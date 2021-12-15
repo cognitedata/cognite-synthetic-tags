@@ -61,7 +61,7 @@ def test_datapoints_retrieve(get_c_mock):
         end=pd.to_datetime("2020-01-01T00:00:59"),
         limit=3,
         include_outside_points=True,
-    ).get(["houston.ro.REMOTE_AI[22]"])
+    )(["houston.ro.REMOTE_AI[22]"])
 
     expected = {
         "houston.ro.REMOTE_AI[22]": pd.Series(
@@ -92,7 +92,7 @@ def test_datapoints_retrieve_latest(get_c_mock):
     values = data_stores.CDFStore(
         c_mock.datapoints.retrieve_latest,
         before=pd.to_datetime("2020-01-01T00:00:54"),
-    ).get(["houston.ro.REMOTE_AI[22]"])
+    )(["houston.ro.REMOTE_AI[22]"])
 
     expected = {
         "houston.ro.REMOTE_AI[22]": pd.Series(
@@ -118,7 +118,7 @@ def test_datapoints_retrieve_unknown_tag(get_c_mock):
         end=pd.to_datetime("2020-01-03T01:00:00"),
         ignore_unknown_ids=True,
         limit=3,
-    ).get(["FOOBAR"])
+    )(["FOOBAR"])
 
     expected = {"FOOBAR": pd.Series(index=pd.DatetimeIndex([]))}
 
