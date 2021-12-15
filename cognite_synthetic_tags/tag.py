@@ -136,7 +136,7 @@ class Tag:
         be there is a chance to resolve the specs (i.e. the short-circuiting
         happens on the line of code in the example).
         """
-        raise UnsupportedOperationError()
+        raise UnsupportedOperationError(self)
 
     def bool(self) -> Tag:
         return self.calc("bool")
@@ -149,6 +149,7 @@ class UnsupportedOperationError(ValueError):
     msg = (
         "Tag instances do not support boolean operators (e.g. 'and', 'or')."
         " Instead, use bitwise equivalents ('&', '|')."
+        "\nTag: {tag}"
         "\nThere are many ways to get this error, some include:"
         "\n  error: Tag(A) or Tag(B)"
         "\n    fix: Tag(A) | Tag(B)"
@@ -165,5 +166,5 @@ class UnsupportedOperationError(ValueError):
         "\n    fix: ~Tag(A)  # same as .bool_not()"
     )
 
-    def __init__(self):
-        super().__init__(self.msg)
+    def __init__(self, tag):
+        super().__init__(self.msg.format(tag=tag))
