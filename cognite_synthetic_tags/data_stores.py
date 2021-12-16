@@ -1,5 +1,5 @@
 import abc
-from typing import Callable, Optional, List
+from typing import Callable, List
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,6 @@ __all__ = [
 
 
 class Store(abc.ABC):
-
     def __init__(self, retrieve_func, *args, **kwargs):
         self.retrieve_func = retrieve_func
         self.retrieve_args = args
@@ -74,6 +73,8 @@ class CDFStore(Store):
 
         # Drop aggreated from column names:
         if aggregate:
-            df.columns = [col.replace(f"|{aggregate}", "") for col in df.columns]
+            df.columns = [
+                col.replace(f"|{aggregate}", "") for col in df.columns
+            ]
 
         return df
