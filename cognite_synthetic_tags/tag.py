@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
+import os
 from typing import Any, Optional
 
 from ._operations import INFIX_OPERATORS, REVERSE_OPERATIONS
 from .types import OperatorT, TagFormulaT
+
+logger = logging.getLogger(__name__)
 
 
 class Tag:
@@ -136,7 +140,11 @@ class Tag:
         be there is a chance to resolve the specs (i.e. the short-circuiting
         happens on the line of code in the example).
         """
-        raise UnsupportedOperationError(self)
+        if os.environ.get("COGNITE_SYNTHETIC_TAGS_ALLOW_BOOL", False):
+            logger.warning(UnsupportedOperationError.MESSAGE.format(tag=self))
+            return True
+        else:
+            raise UnsupportedOperationError(self)
 
     def bool(self) -> Tag:
         return self.calc("bool")
@@ -146,7 +154,7 @@ class Tag:
 
 
 class UnsupportedOperationError(ValueError):
-    msg = (
+    MESSAGE = (
         "Tag instances do not support boolean operators (e.g. 'and', 'or')."
         " Instead, use bitwise equivalents ('&', '|')."
         "\nTag: {tag}"
@@ -167,4 +175,4 @@ class UnsupportedOperationError(ValueError):
     )
 
     def __init__(self, tag):
-        super().__init__(self.msg.format(tag=tag))
+        super().__init__(self.MESSAGE.format(tag=tag))
