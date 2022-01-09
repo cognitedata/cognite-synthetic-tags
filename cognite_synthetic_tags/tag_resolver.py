@@ -104,15 +104,6 @@ class TagResolver:
             if not store_tags:
                 continue
 
-            # ensure there are no reused names:
-            #   (we don't allow using tag names for keys in specs)
-            for key in store_tags:
-                if key in spec_keys:
-                    raise ValueError(
-                        f"Duplicate definition"
-                        f" (tag names used as key in specs): {key}"
-                    )
-
             # actually finally call the data store:
             #   (data stores are functions form `data_stores` module, see there
             #   for details)

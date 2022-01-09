@@ -315,8 +315,16 @@ def test_recursive_same_name(value_store):
         "total": Tag("A1") + Tag("A2"),
     }
 
-    with pytest.raises(ValueError):
-        TagResolver(value_store).series(specs)
+    with mock.patch("cognite_synthetic_tags.tag_resolver.datetime") as m_dt:
+        m_dt.utcnow.return_value = now
+        value = TagResolver(value_store).series(specs)
+
+    expected = {
+        "A1": pd.Series([1], index=pd.DatetimeIndex([now])),
+        "A2": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "total": pd.Series([3], index=pd.DatetimeIndex([now])),
+    }
+    assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
 
 def test_recursive_same_name_reassigned(value_store):
