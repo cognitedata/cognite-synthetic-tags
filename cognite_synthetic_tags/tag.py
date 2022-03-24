@@ -140,8 +140,12 @@ class Tag:
         be there is a chance to resolve the specs (i.e. the short-circuiting
         happens on the line of code in the example).
         """
-        if os.environ.get("COGNITE_SYNTHETIC_TAGS_ALLOW_BOOL", False):
-            logger.warning(UnsupportedOperationError.MESSAGE.format(tag=self))
+        handling = os.environ.get("COGNITE_SYNTHETIC_TAGS_ALLOW_BOOL", False)
+        if handling:
+            if handling != "silent":
+                logger.warning(
+                    UnsupportedOperationError.MESSAGE.format(tag=self),
+                )
             return True
         else:
             raise UnsupportedOperationError(self)
