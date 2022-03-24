@@ -3,13 +3,24 @@ from __future__ import annotations
 import operator
 from typing import Callable, Dict
 
+import numpy as np
+
+
+def _div_by_0_guard(div_operator):
+    """
+    Guard against this warning when b is zero:
+        'pandas invalid value encountered in double_scalars'
+    """
+    return lambda a, b: np.nan if b == 0 else div_operator(a, b)
+
+
 # https://docs.python.org/3/library/operator.html
 DEFAULT_OPERATIONS: Dict[str, Callable] = {
     "+": operator.add,
     "-": operator.sub,
     "*": operator.mul,
-    "/": operator.truediv,
-    "//": operator.floordiv,
+    "/": _div_by_0_guard(operator.truediv),
+    "//": _div_by_0_guard(operator.floordiv),
     "%": operator.mod,
     "**": operator.pow,
     "&": lambda a, b: operator.and_(bool(a), bool(b)),
