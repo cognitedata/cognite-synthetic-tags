@@ -77,7 +77,9 @@ def test_arithmetic_operations(value_store):
 
     expected = {
         "value_1": pd.Series([20], index=pd.DatetimeIndex([now]), dtype=float),
-        "value_2": pd.Series([30012], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_2": pd.Series(
+            [30012], index=pd.DatetimeIndex([now]), dtype=float
+        ),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
     value_store.get.assert_called_once_with({"A2", "A10", "C300"})
@@ -102,7 +104,9 @@ def test_more_arithmetic_operations(value_store):
         "value_1": pd.Series([5], index=pd.DatetimeIndex([now]), dtype=float),
         "value_2": pd.Series([13], index=pd.DatetimeIndex([now]), dtype=float),
         "value_3": pd.Series([-9], index=pd.DatetimeIndex([now]), dtype=float),
-        "value_4": pd.Series([10.0], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_4": pd.Series(
+            [10.0], index=pd.DatetimeIndex([now]), dtype=float
+        ),
         "value_5": pd.Series([9], index=pd.DatetimeIndex([now]), dtype=float),
         "value_6": pd.Series([27], index=pd.DatetimeIndex([now]), dtype=float),
         "value_7": pd.Series([2], index=pd.DatetimeIndex([now]), dtype=float),

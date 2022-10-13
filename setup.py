@@ -28,7 +28,7 @@ setup(
         " operations on them at the same time."
     ),
     long_description=read("README.md"),
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     author="Fran Hrzenjak",
     author_email="fran.hrzenjak@cognite.com",
     license="Apache License 2.0",
