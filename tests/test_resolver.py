@@ -76,8 +76,8 @@ def test_arithmetic_operations(value_store):
     value = TagResolver(value_store).series(specs)
 
     expected = {
-        "value_1": pd.Series([20], index=pd.DatetimeIndex([now])),
-        "value_2": pd.Series([30012], index=pd.DatetimeIndex([now])),
+        "value_1": pd.Series([20], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_2": pd.Series([30012], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
     value_store.get.assert_called_once_with({"A2", "A10", "C300"})
@@ -99,15 +99,15 @@ def test_more_arithmetic_operations(value_store):
     value = TagResolver(value_store).series(specs)
 
     expected = {
-        "value_1": pd.Series([5], index=pd.DatetimeIndex([now])),
-        "value_2": pd.Series([13], index=pd.DatetimeIndex([now])),
-        "value_3": pd.Series([-9], index=pd.DatetimeIndex([now])),
-        "value_4": pd.Series([10.0], index=pd.DatetimeIndex([now])),
-        "value_5": pd.Series([9], index=pd.DatetimeIndex([now])),
-        "value_6": pd.Series([27], index=pd.DatetimeIndex([now])),
-        "value_7": pd.Series([2], index=pd.DatetimeIndex([now])),
-        "value_8": pd.Series([2], index=pd.DatetimeIndex([now])),
-        "value_9": pd.Series([4], index=pd.DatetimeIndex([now])),
+        "value_1": pd.Series([5], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_2": pd.Series([13], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_3": pd.Series([-9], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_4": pd.Series([10.0], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_5": pd.Series([9], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_6": pd.Series([27], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_7": pd.Series([2], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_8": pd.Series([2], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_9": pd.Series([4], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -164,7 +164,7 @@ def test_calc(value_store):
     value = TagResolver(value_store).series(specs)
 
     expected = {
-        "value_1": pd.Series([42], index=pd.DatetimeIndex([now])),
+        "value_1": pd.Series([42], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -175,7 +175,7 @@ def test_calc_custom_operation(value_store):
         "value_2": Tag("A2").calc("is_even"),
     }
     additional_operations = {
-        "foobar": lambda a, b: str(a + b) * 3,
+        "foobar": lambda a, b: str(int(a + b)) * 3,
         "is_even": lambda a: a % 2 == 0,
     }
 
@@ -198,8 +198,8 @@ def test_apply_custom_operation(value_store):
     value = TagResolver(value_store, additional_operations).series(specs)
 
     expected = {
-        "value_1": pd.Series([7], index=pd.DatetimeIndex([now])),
-        "value_2": pd.Series([22], index=pd.DatetimeIndex([now])),
+        "value_1": pd.Series([7], index=pd.DatetimeIndex([now]), dtype=int),
+        "value_2": pd.Series([22], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -243,8 +243,8 @@ def test_recursive_spec(value_store):
     value = TagResolver(value_store).series(specs)
 
     expected = {
-        "value_1": pd.Series([3], index=pd.DatetimeIndex([now])),
-        "value_2": pd.Series([30], index=pd.DatetimeIndex([now])),
+        "value_1": pd.Series([3], index=pd.DatetimeIndex([now]), dtype=int),
+        "value_2": pd.Series([30], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -259,9 +259,9 @@ def test_recursive_spec_repeated(value_store):
     value = TagResolver(value_store).series(specs)
 
     expected = {
-        "value_1": pd.Series([3], index=pd.DatetimeIndex([now])),
-        "value_2": pd.Series([30], index=pd.DatetimeIndex([now])),
-        "value_3": pd.Series([33], index=pd.DatetimeIndex([now])),
+        "value_1": pd.Series([3], index=pd.DatetimeIndex([now]), dtype=int),
+        "value_2": pd.Series([30], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_3": pd.Series([33], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -278,11 +278,11 @@ def test_recursive_spec_repeated_deep(value_store):
     value = TagResolver(value_store).series(specs)
 
     expected = {
-        "value_1": pd.Series([3], index=pd.DatetimeIndex([now])),
-        "value_2": pd.Series([30], index=pd.DatetimeIndex([now])),
-        "value_3": pd.Series([40], index=pd.DatetimeIndex([now])),
-        "value_4": pd.Series([70], index=pd.DatetimeIndex([now])),
-        "value_5": pd.Series([73], index=pd.DatetimeIndex([now])),
+        "value_1": pd.Series([3], index=pd.DatetimeIndex([now]), dtype=int),
+        "value_2": pd.Series([30], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_3": pd.Series([40], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_4": pd.Series([70], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_5": pd.Series([73], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -346,7 +346,7 @@ def test_literal_value(value_store):
         value = TagResolver(value_store).series(specs)
 
     expected = {
-        "A2": pd.Series([2], index=pd.DatetimeIndex([now])),
+        "A2": pd.Series([2], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -362,8 +362,8 @@ def test_literal_value_used_in_formula(value_store):
         value = TagResolver(value_store).series(specs)
 
     expected = {
-        "A2": pd.Series([2], index=pd.DatetimeIndex([now])),
-        "A3": pd.Series([6], index=pd.DatetimeIndex([now])),
+        "A2": pd.Series([2], index=pd.DatetimeIndex([now]), dtype=float),
+        "A3": pd.Series([6], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -379,8 +379,8 @@ def test_literals_only(value_store):
         value = TagResolver(value_store).series(specs)
 
     expected = {
-        "lit1": pd.Series([11], index=pd.DatetimeIndex([now])),
-        "lit2": pd.Series([22], index=pd.DatetimeIndex([now])),
+        "lit1": pd.Series([11], index=pd.DatetimeIndex([now]), dtype=float),
+        "lit2": pd.Series([22], index=pd.DatetimeIndex([now]), dtype=float),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -703,7 +703,7 @@ def test_reuse_known_tags():
 
         assert_frame_equal(
             pd.DataFrame(value2),
-            pd.DataFrame({"value_22": 22}, index=[0]),
+            pd.DataFrame({"value_22": 22}, index=[0], dtype=float),
         )
         assert p_get.call_count == 1  # no new calls!
 

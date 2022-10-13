@@ -60,7 +60,7 @@ class CDFStore(Store):
             )
         aggregate = aggregates[0] if aggregates else None
         columns = (
-            tags
+            list(tags)
             if aggregate is None
             else [f"{tag}|{aggregate}" for tag in tags]
         )
