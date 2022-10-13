@@ -206,7 +206,7 @@ class TagResolver:
                 )
             self._recursive_tags[-1].add(tag.name)
             item = self._specs[tag.name]
-            tag.formula = getattr(item, "formula", item)
+            tag.formula = getattr(item, "formula", item)  # type: ignore
         return tag
 
     def _resolve_formula(self, formula: TagFormulaT) -> TagValueT:
@@ -230,7 +230,9 @@ class TagResolver:
                 operands.append(self.context[item.name])
             else:
                 # got some formula, recursion!
-                operands.append(self._resolve_formula(subformula))
+                operands.append(
+                    self._resolve_formula(subformula),  # type: ignore
+                )
 
         # find which operation should be applied:
         operation: OperationT
