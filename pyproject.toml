@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite_synthetic_tags"
-version = "0.3.6"
+version = "0.4.0"
 description = "Framework for working easily with tags, synthetic and regular, from Cognite Data Fusion (CDF) API."
 authors = ["Fran Hrzenjak <fran.hrzenjak@cognite.com>"]
 license = "Apache License 2.0"
@@ -22,21 +22,21 @@ branch=true
 source=["cognite_synthetic_tags"]
 
 [tool.poetry.dependencies]
-python = "^3.7.1"
-pandas = "^1.3.3"
-cognite-sdk-core = "^2.42.0"
+python = ">=3.9,<4"
+cognite-sdk = {version = ">7,<8", extras = ["pandas"]}
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^0.910"
-pre-commit = "^2.13.0"
-pytest = "^6.2.4"
-pytest-mock = "^3.6.1"
-coverage = {extras = ["toml"], version = "^5.5"}
+mypy = "^1.8.0"
+pre-commit = "^3.6.2"
+pytest = "^8.0.2"
+pytest-mock = "^3.12.0"
+coverage = {version = "^7.4.3", extras = ["toml"]}
+python-dotenv = "^1.0.1"
 
 [build-system]
 requires = [
     "poetry-core>=1.0.0",
-    "setuptools>30,<50.0",  # https://github.com/pypa/setuptools/issues/2353
+    "setuptools>60.0",
     "wheel",
 ]
 build-backend = "poetry.core.masonry.api"
