@@ -59,8 +59,7 @@ def test_tag_str_apply_with_comparison_operator():
 
 
 def test_tag_str_apply_with_literal_function():
-    def foobar(a, b):
-        ...
+    def foobar(a, b): ...
 
     tag = Tag.apply(foobar, Tag("A2"), Tag("B3"))
 
@@ -80,8 +79,7 @@ def test_tag_str_calc_with_extension():
 
 
 def test_tag_str_calc_with_literal_function():
-    def foobar(a, b):
-        ...
+    def foobar(a, b): ...
 
     tag = Tag("A2").calc(foobar)
 
@@ -101,8 +99,7 @@ def test_tag_str_calc():
 
 
 def test_tag_str_calc_foo():
-    def foo(*a):
-        ...
+    def foo(*a): ...
 
     tag = Tag.apply(foo, Tag("A2") * Tag("B3") + 2 * Tag("C4"), Tag("D5")) + 4
 

@@ -302,9 +302,11 @@ class TagResolver:
         # convert any non-series items to series:
         #   (repeat the item for every index)
         all_series: List[pd.Series] = [
-            val
-            if isinstance(val, pd.Series)
-            else pd.Series(val, index=index, dtype=float)
+            (
+                val
+                if isinstance(val, pd.Series)
+                else pd.Series(val, index=index, dtype=float)
+            )
             for val in data
         ]
 

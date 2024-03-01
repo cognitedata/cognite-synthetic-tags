@@ -24,12 +24,10 @@ class Store(abc.ABC):
         return {col: df[col] for col in df.columns}
 
     @abc.abstractmethod
-    def _fetch(self, external_ids):
-        ...
+    def _fetch(self, external_ids): ...
 
     @abc.abstractmethod
-    def _process(self, raw, external_ids):
-        ...
+    def _process(self, raw, external_ids): ...
 
     def process(self, func):
         self._process_funcs.append(func)
