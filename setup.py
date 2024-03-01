@@ -11,7 +11,7 @@ def read(filename):
         return file.read()
 
 
-version = "0.3.6"
+version = "0.4.0"
 if "-dev" in version:
     dev_status = "Development Status :: 3 - Alpha"
 elif "-beta" in version:
@@ -36,7 +36,7 @@ setup(
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=[
-        "cognite-sdk>=2.26,<3",
+        "cognite-sdk>=7,<8",
     ],
     classifiers=[
         dev_status,
@@ -45,10 +45,9 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Software Development",
         "Topic :: Software Development :: Libraries :: Python Modules",
