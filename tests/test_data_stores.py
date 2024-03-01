@@ -26,14 +26,18 @@ def get_c_mock():
                     "houston.ro.REMOTE_AI[22]": [
                         0.003925000131130218,
                         0,
+                        0,
+                        0,
                         0.003925000131130218,
                     ],
                 },
                 index=pd.DatetimeIndex(
                     [
-                        "2020-01-01T00:00:53",
-                        "2020-01-01T00:00:54",
                         "2020-01-01T00:00:55",
+                        "2020-01-01T00:00:56",
+                        "2020-01-01T00:00:57",
+                        "2020-01-01T00:00:58",
+                        "2020-01-01T00:00:59",
                     ],
                 ),
             ),
@@ -42,10 +46,12 @@ def get_c_mock():
 
         with monkeypatch_cognite_client() as c_mock:
             data = options[option]
-            p_to_pandas = c_mock.datapoints.retrieve.return_value.to_pandas
+            p_to_pandas = (
+                c_mock.time_series.data.retrieve.return_value.to_pandas
+            )
             p_to_pandas.return_value = data
             p_to_pandas = (
-                c_mock.datapoints.retrieve_latest.return_value.to_pandas
+                c_mock.time_series.data.retrieve_latest.return_value.to_pandas
             )
             p_to_pandas.return_value = np.split(data, [1])[0]  # one row df
             return c_mock
@@ -56,21 +62,31 @@ def get_c_mock():
 def test_datapoints_retrieve(get_c_mock):
     c_mock = get_c_mock("multi")
     values = data_stores.CDFStore(
-        c_mock.datapoints.retrieve,
-        start=pd.to_datetime("2020-01-01T00:00:54"),
-        end=pd.to_datetime("2020-01-01T00:00:59"),
-        limit=3,
-        include_outside_points=True,
+        c_mock.time_series.data.retrieve,
+        start=pd.to_datetime("2020-01-01T00:00:55"),
+        end=pd.to_datetime("2020-01-01T00:01:00"),
+        limit=5,
     )(["houston.ro.REMOTE_AI[22]"])
+
+    # Data changed slightly (leap second?),
+    # may need to update expected data again, see get_c_mock.
+    # equivalent_call = c_mock.time_series.data.retrieve(
+    #     external_id="houston.ro.REMOTE_AI[22]",
+    #     start=pd.to_datetime("2020-01-01T00:00:55"),
+    #     end=pd.to_datetime("2020-01-01T00:01:00"),
+    #     limit=5,
+    # ).to_pandas()
 
     expected = {
         "houston.ro.REMOTE_AI[22]": pd.Series(
-            [0.003925000131130218, 0, 0.003925000131130218],
+            [0.003925000131130218, 0, 0, 0, 0.003925000131130218],
             index=pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:53",
-                    "2020-01-01T00:00:54",
                     "2020-01-01T00:00:55",
+                    "2020-01-01T00:00:56",
+                    "2020-01-01T00:00:57",
+                    "2020-01-01T00:00:58",
+                    "2020-01-01T00:00:59",
                 ],
             ),
         )
@@ -78,19 +94,18 @@ def test_datapoints_retrieve(get_c_mock):
 
     assert_frame_equal(pd.DataFrame(values), pd.DataFrame(expected))
     assert_called_once_with(
-        c_mock.datapoints.retrieve,
+        c_mock.time_series.data.retrieve,
         external_id=["houston.ro.REMOTE_AI[22]"],
-        start=pd.to_datetime("2020-01-01T00:00:54"),
-        end=pd.to_datetime("2020-01-01T00:00:59"),
-        limit=3,
-        include_outside_points=True,
+        start=pd.to_datetime("2020-01-01T00:00:55"),
+        end=pd.to_datetime("2020-01-01T00:01:00"),
+        limit=5,
     )
 
 
 def test_datapoints_retrieve_latest(get_c_mock):
     c_mock = get_c_mock("single")
     values = data_stores.CDFStore(
-        c_mock.datapoints.retrieve_latest,
+        c_mock.time_series.data.retrieve_latest,
         before=pd.to_datetime("2020-01-01T00:00:54"),
     )(["houston.ro.REMOTE_AI[22]"])
 
@@ -103,7 +118,7 @@ def test_datapoints_retrieve_latest(get_c_mock):
 
     assert_frame_equal(pd.DataFrame(values), pd.DataFrame(expected))
     assert_called_once_with(
-        c_mock.datapoints.retrieve_latest,
+        c_mock.time_series.data.retrieve_latest,
         external_id=["houston.ro.REMOTE_AI[22]"],
         before=pd.to_datetime("2020-01-01T00:00:54"),
     )
@@ -113,18 +128,18 @@ def test_datapoints_retrieve_latest(get_c_mock):
 def test_datapoints_retrieve_unknown_tag(get_c_mock):
     c_mock = get_c_mock("empty")
     values = data_stores.CDFStore(
-        c_mock.datapoints.retrieve,
+        c_mock.time_series.data.retrieve,
         start=pd.to_datetime("2020-01-03T00:00:00"),
         end=pd.to_datetime("2020-01-03T01:00:00"),
         ignore_unknown_ids=True,
         limit=3,
     )(["FOOBAR"])
 
-    expected = {"FOOBAR": pd.Series(index=pd.DatetimeIndex([]))}
+    expected = {"FOOBAR": pd.Series(index=pd.DatetimeIndex([]), dtype=float)}
 
     assert_frame_equal(pd.DataFrame(values), pd.DataFrame(expected))
     assert_called_once_with(
-        c_mock.datapoints.retrieve,
+        c_mock.time_series.data.retrieve,
         external_id=["FOOBAR"],
         start=pd.to_datetime("2020-01-03T00:00:00"),
         end=pd.to_datetime("2020-01-03T01:00:00"),
