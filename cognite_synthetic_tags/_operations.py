@@ -1,0 +1,78 @@
+from __future__ import annotations
+
+import operator
+from typing import Callable, Dict
+
+import numpy as np
+
+
+def _div_by_0_guard(div_operator):
+    """
+    Guard against this warning when b is zero:
+        'pandas invalid value encountered in double_scalars'
+    """
+    return lambda a, b: np.nan if b == 0 else div_operator(a, b)
+
+
+# https://docs.python.org/3/library/operator.html
+DEFAULT_OPERATIONS: Dict[str, Callable] = {
+    "+": operator.add,
+    "-": operator.sub,
+    "*": operator.mul,
+    "/": _div_by_0_guard(operator.truediv),
+    "//": _div_by_0_guard(operator.floordiv),
+    "%": operator.mod,
+    "**": operator.pow,
+    "&": lambda a, b: operator.and_(bool(a), bool(b)),
+    "|": lambda a, b: operator.or_(bool(a), bool(b)),
+    "^": lambda a, b: operator.xor(bool(a), bool(b)),
+    "not": lambda a: operator.not_(bool(a)),  # ~
+    "bool": lambda a: bool(a),  # no bitwise operator, only Tag.bool()
+    "gt": operator.gt,
+    "ge": operator.ge,
+    "lt": operator.lt,
+    "le": operator.le,
+    "eq": operator.eq,
+    "ne": operator.ne,
+}
+
+
+REVERSE_OPERATIONS = (
+    "r+",
+    "r-",
+    "r*",
+    "r/",
+    "r//",
+    "r**",
+    "r%",
+    "r&",
+    "r|",
+    "r^",
+)
+
+
+# This is for cosmetics only.
+# By default, Tag.__str__ uses "prefix" notation (a.k.a. Polish notation):
+# oper(val1, val2)
+# Any operators in this dict will use "infix" notation:
+# val1 oper val2
+# Additionally, operators (keys) will be replaced with their values, e.g:
+# 2^3 is more commonly understood to be 2 "to the power of" then 2**3 would be.
+INFIX_OPERATORS = {
+    "+": "+",
+    "-": "-",
+    "*": "×",
+    "/": "∕",
+    "//": "∕↓",
+    "%": "modulo",
+    "**": "^",
+    "&": "and",
+    "|": "or",
+    "^": "xor",
+    "gt": ">",
+    "ge": "≥",
+    "lt": "<",
+    "le": "≤",
+    "eq": "=",
+    "ne": "≠",
+}
