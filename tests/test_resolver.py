@@ -96,6 +96,8 @@ def test_more_arithmetic_operations(value_store):
         "value_7": Tag("A14") % 4,
         "value_8": 14 % Tag("A4"),
         "value_9": 19 // Tag("A4"),
+        "value_10": 19 / Tag("A4"),
+        "value_11": Tag("A4") / 3,
     }
 
     value = TagResolver(value_store).series(specs)
@@ -112,6 +114,12 @@ def test_more_arithmetic_operations(value_store):
         "value_7": pd.Series([2], index=pd.DatetimeIndex([now]), dtype=float),
         "value_8": pd.Series([2], index=pd.DatetimeIndex([now]), dtype=float),
         "value_9": pd.Series([4], index=pd.DatetimeIndex([now]), dtype=float),
+        "value_10": pd.Series(
+            [19 / 4], index=pd.DatetimeIndex([now]), dtype=float
+        ),
+        "value_11": pd.Series(
+            [4 / 3], index=pd.DatetimeIndex([now]), dtype=float
+        ),
     }
     assert_frame_equal(pd.DataFrame(value), pd.DataFrame(expected))
 
@@ -741,3 +749,12 @@ def test_latest_multiple(series_value_store):
 
     expected = {"value_1": 7}
     assert value == expected
+
+
+def test_unknown_store(value_store):
+    specs = {"value_1": Tag("A1", store="boom")}
+
+    with pytest.raises(ValueError) as exc:
+        TagResolver(value_store).latest(specs)
+
+    assert "Unknown value store 'boom'" in str(exc.value)

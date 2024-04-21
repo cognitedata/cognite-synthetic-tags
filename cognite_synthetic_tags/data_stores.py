@@ -1,9 +1,9 @@
 import abc
-from cognite.client.data_classes import DatapointsList
 from typing import Callable, List
 
 import numpy as np
 import pandas as pd
+from cognite.client.data_classes import DatapointsList
 
 __all__ = [
     "CDFStore",
@@ -15,8 +15,12 @@ class Store(abc.ABC):
         self.retrieve_func = retrieve_func
         self.retrieve_args = args
         self.retrieve_kwargs = kwargs
-        self._preprocess_funcs: List[Callable[[pd.DataFrame], pd.DataFrame]] = []
-        self._process_funcs: List[Callable[[DatapointsList], DatapointsList]] = []
+        self._preprocess_funcs: List[Callable[[pd.DataFrame], pd.DataFrame]] = (
+            []
+        )
+        self._process_funcs: List[
+            Callable[[DatapointsList], DatapointsList]
+        ] = []
 
     def __call__(self, external_ids):
         res = self._fetch(external_ids)
@@ -28,10 +32,10 @@ class Store(abc.ABC):
         return {col: df[col] for col in df.columns}
 
     @abc.abstractmethod
-    def _fetch(self, external_ids): ...
+    def _fetch(self, external_ids): ...  # pragma: no cover
 
     @abc.abstractmethod
-    def _process(self, raw, external_ids): ...
+    def _process(self, raw, external_ids): ...  # pragma: no cover
 
     def preprocess(self, func):
         self._preprocess_funcs.append(func)

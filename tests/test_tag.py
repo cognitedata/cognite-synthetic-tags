@@ -127,6 +127,33 @@ def test_tag_str_reverse_oper_sub():
     assert value == expected
 
 
+def test_tag_str_reverse_oper_and():
+    tag = 1 & Tag("B3")
+
+    value = str(tag)
+
+    expected = "1 and B3"
+    assert value == expected
+
+
+def test_tag_str_reverse_oper_or():
+    tag = 2 | Tag("B3")
+
+    value = str(tag)
+
+    expected = "2 or B3"
+    assert value == expected
+
+
+def test_tag_str_reverse_oper_xor():
+    tag = 2 ^ Tag("B3")
+
+    value = str(tag)
+
+    expected = "2 xor B3"
+    assert value == expected
+
+
 def test_tag_str_uft8_ne():
     tag = 2 != Tag("B3")
 
@@ -159,3 +186,25 @@ def test_tag_bool_wrong_chained_comparison():
 def test_tag_bool_wrong_precedence():
     with pytest.raises(UnsupportedOperationError):
         Tag("A3") < 5 & Tag("B2") > 7
+
+
+def test_tag_bool_allowed(env_allow_bool, caplog):
+    value = bool(Tag("A3"))
+    assert value is True
+    assert caplog.text.startswith("WARNING")
+    expected_parts = [
+        (
+            "Tag instances do not support boolean operators (e.g. 'and', 'or')."
+            " Instead, use bitwise equivalents ('&', '|')."
+        ),
+        "Tag: A3",
+        "There are many ways to get this error, some include:",
+    ]
+    for part in expected_parts:
+        assert part in caplog.text
+
+
+def test_tag_bool_allowed_silent(env_allow_bool_silent, caplog):
+    value = bool(Tag("A3"))
+    assert value is True
+    assert caplog.text == ""
