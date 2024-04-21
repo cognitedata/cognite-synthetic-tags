@@ -30,3 +30,10 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+      env:
+        CDF_TOKEN_URL: 'https://login.microsoftonline.com/48d5043c-cf70-4c49-881c-c638f5796997/oauth2/v2.0/token'
+        CDF_CLIENT_ID: '${{ secrets.TEST_CLIENT_ID }}'
+        CDF_CLIENT_SECRET: '${{ secrets.TEST_CLIENT_SECRET }}'
+        CDF_PROJECT: 'publicdata'
+        CDF_CLIENT_NAME: 'CI tests'
+        CDF_SCOPES: 'https://api.cognitedata.com/.default'
