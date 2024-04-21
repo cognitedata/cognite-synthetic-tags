@@ -1,0 +1,48 @@
+inputs:
+  Datapoints:
+  - datapoints:
+    - average: 38.60403703703704
+      timestamp: 1628287200000
+    - average: 8.109921296296296
+      timestamp: 1628287800000
+    - average: 39.869542022792025
+      timestamp: 1628288400000
+    - average: 8.265749643874644
+      timestamp: 1628289000000
+    - average: 49.812333333333335
+      timestamp: 1628289600000
+    - average: 19.66886111111111
+      timestamp: 1628290200000
+    externalId: houston.ro.REMOTE_AI[3]
+    id: 8559907212086794
+    isStep: false
+    isString: false
+    unit: psig
+    unitExternalId: ''
+  - datapoints:
+    - average: 35.5925
+      timestamp: 1628287200000
+    - average: 7.79175
+      timestamp: 1628287800000
+    - average: 36.765166666666666
+      timestamp: 1628288400000
+    - average: 7.929875
+      timestamp: 1628289000000
+    - average: 45.872416666666666
+      timestamp: 1628289600000
+    - average: 18.16291203703704
+      timestamp: 1628290200000
+    externalId: houston.ro.REMOTE_AI[4]
+    id: 8926655992048395
+    isStep: false
+    isString: false
+    unit: psig
+    unitExternalId: ''
+outputs: {}
+results:
+- delta: 3.011537037037037
+- delta: 0.3181712962962955
+- delta: 3.1043753561253595
+- delta: 0.33587464387464383
+- delta: 3.9399166666666687
+- delta: 1.5059490740740706

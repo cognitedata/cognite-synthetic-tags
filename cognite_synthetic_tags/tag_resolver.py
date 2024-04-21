@@ -100,14 +100,21 @@ class TagResolver:
 
         # fetch all the data from CDF:
         for store_key, store_tags in real_tags.items():
-
             if not store_tags:
                 continue
+
+            # remove store suffix before calling the data store:
+            if store_key != self._default_store_key:
+                store_tags = {tag.replace(f"__{store_key}", "") for tag in store_tags}
 
             # actually finally call the data store:
             #   (data stores are functions form `data_stores` module, see there
             #   for details)
             values = self.data_stores[store_key](store_tags)
+
+            # add store suffix back:
+            if store_key != self._default_store_key:
+                values = {f"{key}__{store_key}": value for key, value in values.items()}
 
             # add the values to context:
             #   (to be used later in `self._resolve_formula`)
@@ -246,18 +253,8 @@ class TagResolver:
 
         # apply the operator to the operands:
         uniform_operands = self._make_series(operands)
-        # ...do it manually so that we support all possible operations
-        # ...(this is slower, but supports things like string manipulation)
-        # ... TODO consider making a FastTagResolver ?
-        values_series: List[pd.Series] = uniform_operands
-        result = pd.Series(
-            (
-                operation(*[series[i] for series in values_series])
-                for i in values_series[0].index
-            ),
-            index=values_series[0].index,
-        )
-
+        result = pd.concat(uniform_operands, axis=1).apply(
+            lambda row: operation(*row), axis=1)
         return result
 
     @staticmethod
@@ -293,12 +290,8 @@ class TagResolver:
         if not series:
             series = [pd.Series(index=pd.DatetimeIndex([datetime.utcnow()]))]
 
-        # check that all series have the same indexes:
-        #   (all are returned from the same CDF API call, so they should)
-        index = series[0].index
-        assert all(
-            single_series.index.identical(index) for single_series in series[1:]
-        ), "Series need to have the same index."
+        df = pd.concat([*series], axis=1)
+        index = df.index
         # convert any non-series items to series:
         #   (repeat the item for every index)
         all_series: List[pd.Series] = [
