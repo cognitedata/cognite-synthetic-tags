@@ -105,7 +105,9 @@ class TagResolver:
 
             # remove store suffix before calling the data store:
             if store_key != self._default_store_key:
-                store_tags = {tag.replace(f"__{store_key}", "") for tag in store_tags}
+                store_tags = {
+                    tag.replace(f"__{store_key}", "") for tag in store_tags
+                }
 
             # actually finally call the data store:
             #   (data stores are functions form `data_stores` module, see there
@@ -114,7 +116,10 @@ class TagResolver:
 
             # add store suffix back:
             if store_key != self._default_store_key:
-                values = {f"{key}__{store_key}": value for key, value in values.items()}
+                values = {
+                    f"{key}__{store_key}": value
+                    for key, value in values.items()
+                }
 
             # add the values to context:
             #   (to be used later in `self._resolve_formula`)
@@ -254,7 +259,8 @@ class TagResolver:
         # apply the operator to the operands:
         uniform_operands = self._make_series(operands)
         result = pd.concat(uniform_operands, axis=1).apply(
-            lambda row: operation(*row), axis=1)
+            lambda row: operation(*row), axis=1
+        )
         return result
 
     @staticmethod

@@ -8,7 +8,9 @@ from cognite_synthetic_tags import CDFStore, Tag, TagResolver
 
 
 @pytest.mark.cdf
-def test_single_store_single_tag(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_single_tag(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     THE_TAG = "houston.ro.REMOTE_AI[3]"
     START = datetime(2021, 8, 7, 0, 0, 0)
@@ -38,7 +40,9 @@ def test_single_store_single_tag(approval_client: CogniteClient, data_regression
 
 
 @pytest.mark.cdf
-def test_single_store_multiple_tags(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_multiple_tags(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
@@ -71,7 +75,9 @@ def test_single_store_multiple_tags(approval_client: CogniteClient, data_regress
     )
 
 
-def test_single_store_no_tags(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_no_tags(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     START = datetime(2021, 8, 7, 0, 0, 0)
     END = START + timedelta(minutes=60)
@@ -82,7 +88,7 @@ def test_single_store_no_tags(approval_client: CogniteClient, data_regression: D
         aggregates=["average"],
         granularity="10m",
     )
-    specs = {}
+    specs: dict[str, Tag] = {}
 
     # Act
     df = TagResolver(fetch_func).df(specs)
@@ -100,7 +106,9 @@ def test_single_store_no_tags(approval_client: CogniteClient, data_regression: D
 
 
 @pytest.mark.cdf
-def test_single_store_subtraction(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_subtraction(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
@@ -135,7 +143,9 @@ def test_single_store_subtraction(approval_client: CogniteClient, data_regressio
 
 
 @pytest.mark.cdf
-def test_single_store_only_subtraction(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_only_subtraction(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
@@ -168,7 +178,9 @@ def test_single_store_only_subtraction(approval_client: CogniteClient, data_regr
 
 
 @pytest.mark.cdf
-def test_single_store_comparison(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_comparison(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
@@ -184,7 +196,7 @@ def test_single_store_comparison(approval_client: CogniteClient, data_regression
     specs = {
         "meter_a": Tag(TAG_1),
         "meter_b": Tag(TAG_2),
-        "status": Tag(TAG_1) > Tag(TAG_2)
+        "status": Tag(TAG_1) > Tag(TAG_2),
     }
 
     # Act
@@ -203,7 +215,9 @@ def test_single_store_comparison(approval_client: CogniteClient, data_regression
 
 
 @pytest.mark.cdf
-def test_single_store_only_comparison(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_only_comparison(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
@@ -216,9 +230,7 @@ def test_single_store_only_comparison(approval_client: CogniteClient, data_regre
         aggregates=["average"],
         granularity="10m",
     )
-    specs = {
-        "status": Tag(TAG_1) > Tag(TAG_2)
-    }
+    specs = {"status": Tag(TAG_1) > Tag(TAG_2)}
 
     # Act
     df = TagResolver(fetch_func).df(specs)
@@ -236,7 +248,9 @@ def test_single_store_only_comparison(approval_client: CogniteClient, data_regre
 
 
 @pytest.mark.cdf
-def test_single_store_comparison_w_literals(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_comparison_w_literals(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
@@ -271,7 +285,9 @@ def test_single_store_comparison_w_literals(approval_client: CogniteClient, data
 
 
 @pytest.mark.cdf
-def test_single_store_only_comparison_w_literals(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_single_store_only_comparison_w_literals(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"

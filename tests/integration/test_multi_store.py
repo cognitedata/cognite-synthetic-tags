@@ -8,7 +8,9 @@ from cognite_synthetic_tags import CDFStore, Tag, TagResolver
 
 
 @pytest.mark.cdf
-def test_multi_store_single_tag(approval_client: CogniteClient, data_regression: DataRegressionFixture):
+def test_multi_store_single_tag(
+    approval_client: CogniteClient, data_regression: DataRegressionFixture
+):
     # Arrange
     THE_TAG = "houston.ro.REMOTE_AI[3]"
     START = datetime(2021, 8, 7, 0, 0, 0)

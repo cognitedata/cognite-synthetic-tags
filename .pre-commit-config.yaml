@@ -30,3 +30,5 @@ repos:
     rev: 8cd2d4056637e242709fe09f15a36f0b4b682bda  # v1.8.0
     hooks:
       - id: mypy
+        additional_dependencies:
+          - types-PyYAML

@@ -3,21 +3,23 @@ import inspect
 import itertools
 import json
 import os
-
 from collections.abc import Collection
 from contextlib import suppress
-from typing import Any, Callable, Sequence, Union, Optional
+from typing import Any, Callable, Optional, Sequence, Union
 from unittest.mock import MagicMock
 
 import arrow
 import pandas as pd
 import yaml
-from cognite.client import CogniteClient, ClientConfig
-
+from cognite.client import ClientConfig, CogniteClient
 from cognite.client._api_client import APIClient
 from cognite.client.credentials import OAuthClientCredentials
 from cognite.client.data_classes import FileMetadata, FileMetadataList
-from cognite.client.data_classes._base import CogniteResource, CogniteResourceList, CogniteUpdate
+from cognite.client.data_classes._base import (
+    CogniteResource,
+    CogniteResourceList,
+    CogniteUpdate,
+)
 from cognite.client.data_classes.data_modeling import (
     EdgeApply,
     EdgeApplyList,
@@ -34,7 +36,6 @@ from cognite.client.data_classes.data_modeling import (
 )
 from dotenv import load_dotenv
 from yaml.parser import ParserError
-
 
 load_dotenv()
 
@@ -91,14 +92,17 @@ def create_mock_api(
         for value in itertools.chain(args, kwargs.values()):
             if isinstance(value, write_resource_cls):
                 created.append(value)
-            elif isinstance(value, Sequence) and all(isinstance(v, write_resource_cls) for v in value):
+            elif isinstance(value, Sequence) and all(
+                isinstance(v, write_resource_cls) for v in value
+            ):
                 is_single = False
                 created.extend(value)
             elif isinstance(value, CogniteUpdate):
                 dumped = value.dump(camel_case=True)
                 called = api.retrieve(external_id=dumped["externalId"])
-                # Note that we do not apply the update, that should not be necessary as it was done
-                # the first time this function was run on the historical data.
+                # Note that we do not apply the update, that should not be
+                # necessary as it was done the first time this function was run
+                # on the historical data.
                 created.append(called)
 
         for item in created:
@@ -131,7 +135,7 @@ def create_mock_api(
                         last_updated_time=now_epoch,
                         created_time=now_epoch,
                     )
-                    for node in nodes
+                    for node in nodes or []
                 ],
             ),
             edges=EdgeApplyResultList(
@@ -145,7 +149,7 @@ def create_mock_api(
                         last_updated_time=now_epoch,
                         created_time=now_epoch,
                     )
-                    for edge in edges
+                    for edge in edges or []
                 ],
             ),
         )
@@ -155,7 +159,9 @@ def create_mock_api(
             kwargs["content"] = kwargs["content"].decode()
             kwargs["content"] = yaml.safe_load(kwargs["content"])
         outputs["FileContent"].append(kwargs)
-        file_metadata = FileMetadata(id=42, **{k: v for k, v in kwargs.items() if k != "content"})
+        file_metadata = FileMetadata(
+            id=42, **{k: v for k, v in kwargs.items() if k != "content"}
+        )
         outputs[FileMetadata.__name__].append(file_metadata)
 
         return file_metadata
@@ -166,8 +172,13 @@ def create_mock_api(
         if kwargs:
             dump = {}
             for k, v in kwargs.items():
-                # The json dump + load is to ensure that the object is serializable, typically, replacing np.float64 with float and so on
-                dump[k] = json.loads(v.to_json()) if isinstance(v, pd.DataFrame) else json.loads(json.dumps(v))
+                # The json dump + load is to ensure that the object is
+                # serializable.
+                dump[k] = (
+                    json.loads(v.to_json())
+                    if isinstance(v, pd.DataFrame)
+                    else json.loads(json.dumps(v))
+                )
             outputs[resource_cls.__name__].append(dump)
 
     def log_input_data(fn: Callable) -> Callable:
@@ -176,14 +187,21 @@ def create_mock_api(
             if isinstance(output, bytes):
                 if args:
                     kwargs.update(zip(inspect.signature(fn).parameters, args))
-                inputs[resource_cls.__name__].append({"content_hash": hashlib.md5(output).hexdigest(), **kwargs})
+                inputs[resource_cls.__name__].append(
+                    {"content_hash": hashlib.md5(output).hexdigest(), **kwargs}
+                )
             elif isinstance(output, pd.DataFrame):
                 if args:
                     kwargs.update(zip(inspect.signature(fn).parameters, args))
                 dataframe_hash = int(
-                    hashlib.sha256(pd.util.hash_pandas_object(output, index=True).values).hexdigest(), 16
+                    hashlib.sha256(
+                        pd.util.hash_pandas_object(output, index=True).values
+                    ).hexdigest(),
+                    16,
                 )
-                inputs[resource_cls.__name__].append({"dataframe_hash": dataframe_hash, **kwargs})
+                inputs[resource_cls.__name__].append(
+                    {"dataframe_hash": dataframe_hash, **kwargs}
+                )
             elif isinstance(output, InstancesResult):
                 inputs["Node"].extend(_dump(node) for node in output.nodes)
                 inputs["Edge"].extend(_dump(edge) for edge in output.edges)
@@ -192,7 +210,9 @@ def create_mock_api(
             elif isinstance(output, EdgeList):
                 inputs["Edge"].extend(_dump(edge) for edge in output)
             elif isinstance(output, Collection):
-                inputs[resource_cls.__name__].extend([_dump(obj) for obj in output])
+                inputs[resource_cls.__name__].extend(
+                    [_dump(obj) for obj in output]
+                )
             else:
                 inputs[resource_cls.__name__].append(_dump(output))
 
