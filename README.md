@@ -2,6 +2,7 @@
 
 An easy way to retrieve values from CDF and execute mathematical operations on them at the same time.
 
+[![Coverage Status](https://coveralls.io/repos/github/cognitedata/cognite-synthetic-tags/badge.svg)](https://coveralls.io/github/cognitedata/cognite-synthetic-tags)
 
 ## Motivation
 
