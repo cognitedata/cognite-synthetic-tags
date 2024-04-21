@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from cognite.client import CogniteClient
@@ -13,7 +13,7 @@ def test_single_store_single_tag(
 ):
     # Arrange
     THE_TAG = "houston.ro.REMOTE_AI[3]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -46,7 +46,7 @@ def test_single_store_multiple_tags(
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -79,7 +79,7 @@ def test_single_store_no_tags(
     approval_client: CogniteClient, data_regression: DataRegressionFixture
 ):
     # Arrange
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -112,7 +112,7 @@ def test_single_store_subtraction(
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -149,7 +149,7 @@ def test_single_store_only_subtraction(
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -184,7 +184,7 @@ def test_single_store_comparison(
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -221,7 +221,7 @@ def test_single_store_only_comparison(
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -254,7 +254,7 @@ def test_single_store_comparison_w_literals(
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
@@ -291,7 +291,7 @@ def test_single_store_only_comparison_w_literals(
     # Arrange
     TAG_1 = "houston.ro.REMOTE_AI[3]"
     TAG_2 = "houston.ro.REMOTE_AI[4]"
-    START = datetime(2021, 8, 7, 0, 0, 0)
+    START = datetime(2021, 8, 7, 0, 0, 0, tzinfo=timezone.utc)
     END = START + timedelta(minutes=60)
     fetch_func = CDFStore(
         approval_client.time_series.data.retrieve,
