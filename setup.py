@@ -15,8 +15,8 @@ def read(filename):
 def get_version():
     with open("pyproject.toml") as fh:
         for line in fh:
-            if re.match('^version\s?=', line):
-                return line.split('=')[1].strip().strip('"')
+            if re.match(r"^version\s?=", line):
+                return line.split("=")[1].strip().strip('"')
     raise ValueError("Version not found in pyproject.toml")
 
 
