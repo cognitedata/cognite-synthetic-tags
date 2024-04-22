@@ -1,0 +1,47 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - v0.*
+      - v1.*
+
+jobs:
+  build-and-publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # @v4.1.1
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # @v5.0.0
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip wheel
+        pip install poetry
+        poetry install
+      env:
+        POETRY_VIRTUALENVS_CREATE: false
+    - name: Test with pytest
+      run: |
+        pytest
+      env:
+        CDF_TOKEN_URL: 'https://login.microsoftonline.com/48d5043c-cf70-4c49-881c-c638f5796997/oauth2/v2.0/token'
+        CDF_CLIENT_ID: '${{ secrets.TEST_CLIENT_ID }}'
+        CDF_CLIENT_SECRET: '${{ secrets.TEST_CLIENT_SECRET }}'
+        CDF_PROJECT: 'publicdata'
+        CDF_CLIENT_NAME: 'CI tests'
+        CDF_SCOPES: 'https://api.cognitedata.com/.default'
+    - name: Build
+      run: |
+        poetry build
+    - name: Install twine
+      shell: bash
+      run: pip install 'twine>=5.0.0,<6'
+
+    - name: Release to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      shell: bash
+      run: twine upload --skip-existing --verbose dist/*
