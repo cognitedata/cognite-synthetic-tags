@@ -2,9 +2,8 @@ name: Publish
 
 on:
   push:
-    tags:
-      - v0.*
-      - v1.*
+    branches:
+      - main
 
 jobs:
   build-and-publish:
@@ -34,7 +33,9 @@ jobs:
         CDF_SCOPES: 'https://api.cognitedata.com/.default'
     - name: Coveralls
       uses: coverallsapp/github-action@v2
+
     - name: Build
+      if: startsWith(github.ref, 'refs/tags') && startsWith(github.ref_name , 'v0.')
       run: |
         poetry build
     - name: Install twine
@@ -42,6 +43,7 @@ jobs:
       run: pip install 'twine>=5.0.0,<6'
 
     - name: Release to PyPI
+      if: startsWith(github.ref, 'refs/tags') && startsWith(github.ref_name , 'v0.')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
