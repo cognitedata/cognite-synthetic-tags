@@ -6,6 +6,15 @@ An easy way to retrieve values from CDF and execute mathematical operations on t
 ![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
 ![Python 3.9](https://img.shields.io/badge/Python-3.9-blue)
 
+---
+
+### THIS PROJECT IS IN **ALPHA STAGE**!
+ * The API is not stable and may change without notice.
+ * Maintenance and support are not guaranteed.
+ * Documentation is not complete nor guaranteed to be up-to-date.
+
+---
+
 
 ## Motivation
 
