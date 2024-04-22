@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite_synthetic_tags"
-version = "0.4.0"
+version = "0.5.0"
 description = "Framework for working easily with tags, synthetic and regular, from Cognite Data Fusion (CDF) API."
 authors = ["Fran Hrzenjak <fran.hrzenjak@cognite.com>"]
 license = "Apache License 2.0"

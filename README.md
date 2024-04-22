@@ -2,22 +2,25 @@
 
 An easy way to retrieve values from CDF and execute mathematical operations on them at the same time.
 
-[![Coverage Status](https://coveralls.io/repos/github/cognitedata/cognite-synthetic-tags/badge.svg)](https://coveralls.io/github/cognitedata/cognite-synthetic-tags)
+[![Coverage Status](https://coveralls.io/repos/github/cognitedata/cognite-synthetic-tags/badge.svg)](https://coveralls.io/github/cognitedata/cognite-synthetic-tags) 
+![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
+![Python 3.9](https://img.shields.io/badge/Python-3.9-blue)
+
 
 ## Motivation
 
 To replace a custom-made structure like this:
 ``` python
 {
-    "EG_SecProd_Biocid": [
-        ("EG_13FI1349L.Y", +1),
-        ("EG_13FI1350L.Y", +1),
+    "AB_SecProd_Biocid": [
+        ("AB_17LI1349L.Y", +1),
+        ("AB_17LI1350L.Y", +1),
     ],
-    "EG_PrimProd_Scale": [
-        ("EG_13FI1318L.Y", "EG_13XV1322.Y", +1),
-        ("EG_13FI1418L.Y", "EG_13XV1422.Y", +1),
-        ("EG_13FI1518L.Y", "EG_13XV1522.Y", +1),
-        ("EG_13FI1618L.Y", "EG_13XV1622.Y", +1),
+    "AB_PrimProd_Scale": [
+        ("AB_17LI1318L.Y", "AB_13XV1322.Y", +1),
+        ("AB_17LI1418L.Y", "AB_13XV1422.Y", +1),
+        ("AB_17LI1518L.Y", "AB_13XV1522.Y", +1),
+        ("AB_17LI1618L.Y", "AB_13XV1622.Y", +1),
         ...
 ```
 
@@ -25,12 +28,12 @@ with something more readable and powerful:
 
 ``` python
 {
-    "EG_SecProd_Biocid": Tag("EG_13FI1349L.Y") + Tag("EG_13FI1350L.Y"),
-    "EG_PrimProd_Scale": (
-        Tag("EG_13FI1318L.Y") * Tag("EG_13XV1322.Y") +
-        Tag("EG_13FI1418L.Y") * Tag("EG_13XV1422.Y") +
-        Tag("EG_13FI1518L.Y") * Tag("EG_13XV1522.Y") +
-        Tag("EG_13FI1618L.Y") * Tag("EG_13XV1622.Y") +
+    "AB_SecProd_Biocid": Tag("AB_17LI1349L.Y") + Tag("AB_17LI1350L.Y"),
+    "AB_PrimProd_Scale": (
+        Tag("AB_17LI1318L.Y") * Tag("AB_13XV1322.Y") +
+        Tag("AB_17LI1418L.Y") * Tag("AB_13XV1422.Y") +
+        Tag("AB_17LI1518L.Y") * Tag("AB_13XV1522.Y") +
+        Tag("AB_17LI1618L.Y") * Tag("AB_13XV1622.Y") +
         ...
 ```
 
@@ -70,7 +73,7 @@ With **Synthetic Tags** this becomes:
 algebra operations such as:
  * basic math operations: `total_a_b = Tag("METER_A") + Tag("METER_B")`
  * parenthesis and literal values: `complicated_calculation = (Tag("METER_C") - 10) / (Tag("METER_D") + TAG("METER_E"))"`
- * boolean logic: `alert_status = Tag("METER_F") > 42`
+ * comparison and boolean logic: `alert_status = Tag("METER_F") > 42`
 
 It also supports function calls, either on multiple tags or on individual tags:
  * calculations on individual tags: `value_int = Tag("MEETER_G").calc(round)`
