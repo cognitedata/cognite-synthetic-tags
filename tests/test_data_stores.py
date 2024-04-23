@@ -160,6 +160,69 @@ def test_process(get_c_mock):
     )
 
 
+def test_process_closure(get_c_mock):
+    c_mock = get_c_mock("multi")
+    stores = []
+    for i in range(2):
+        stores.append(
+            data_stores.CDFStore(
+                c_mock.time_series.data.retrieve,
+                start=pd.to_datetime("2020-01-01T00:00:55"),
+                end=pd.to_datetime("2020-01-01T00:01:00"),
+                limit=5,
+            ).process((lambda df, i_: df + 1000 * (i_ + 1)), i)
+        )
+
+    values = [
+        stores[0](["houston.ro.REMOTE_AI[22]"]),
+        stores[1](["houston.ro.REMOTE_AI[22]"]),
+    ]
+
+    expected = [
+        {
+            "houston.ro.REMOTE_AI[22]": pd.Series(
+                [
+                    1000.003925000131130218,
+                    1000,
+                    1000,
+                    1000,
+                    1000.003925000131130218,
+                ],
+                index=pd.DatetimeIndex(
+                    [
+                        "2020-01-01T00:00:55",
+                        "2020-01-01T00:00:56",
+                        "2020-01-01T00:00:57",
+                        "2020-01-01T00:00:58",
+                        "2020-01-01T00:00:59",
+                    ],
+                ),
+            )
+        },
+        {
+            "houston.ro.REMOTE_AI[22]": pd.Series(
+                [
+                    2000.003925000131130218,
+                    2000,
+                    2000,
+                    2000,
+                    2000.003925000131130218,
+                ],
+                index=pd.DatetimeIndex(
+                    [
+                        "2020-01-01T00:00:55",
+                        "2020-01-01T00:00:56",
+                        "2020-01-01T00:00:57",
+                        "2020-01-01T00:00:58",
+                        "2020-01-01T00:00:59",
+                    ],
+                ),
+            )
+        },
+    ]
+    assert_frame_equal(pd.DataFrame(values), pd.DataFrame(expected))
+
+
 def test_preprocess(get_c_mock):
     c_mock = get_c_mock("multi")
 
@@ -192,6 +255,54 @@ def test_preprocess(get_c_mock):
         end=pd.to_datetime("2020-01-01T00:01:00"),
         limit=5,
     )
+
+
+def test_preprocess_closure(get_c_mock):
+    c_mock = get_c_mock("multi")
+
+    def fake_news(resource, i):
+        resource.to_pandas.return_value = pd.DataFrame(
+            {
+                "houston.ro.REMOTE_AI[22]": [
+                    11 * 10**i,
+                    22 * 10**i,
+                    33 * 10**i,
+                    44 * 10**i,
+                    55 * 10**i,
+                ]
+            },
+        )
+        return resource
+
+    stores = []
+    for i in range(2):
+        stores.append(
+            data_stores.CDFStore(
+                c_mock.time_series.data.retrieve,
+                start=pd.to_datetime("2020-01-01T00:00:55"),
+                end=pd.to_datetime("2020-01-01T00:01:00"),
+                limit=5,
+            ).preprocess(fake_news, i)
+        )
+
+    values = [
+        stores[0](["houston.ro.REMOTE_AI[22]"]),
+        stores[1](["houston.ro.REMOTE_AI[22]"]),
+    ]
+
+    expected = [
+        {
+            "houston.ro.REMOTE_AI[22]": pd.Series(
+                [11, 22, 33, 44, 55],
+            )
+        },
+        {
+            "houston.ro.REMOTE_AI[22]": pd.Series(
+                [110, 220, 330, 440, 550],
+            )
+        },
+    ]
+    assert_frame_equal(pd.DataFrame(values), pd.DataFrame(expected))
 
 
 # def test_datapoints_retrieve_unknown_tag(mocked_client):
