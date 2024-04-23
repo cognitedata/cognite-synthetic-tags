@@ -37,12 +37,18 @@ class Store(abc.ABC):
     @abc.abstractmethod
     def _process(self, raw, external_ids): ...  # pragma: no cover
 
-    def preprocess(self, func):
-        self._preprocess_funcs.append(func)
+    def preprocess(self, func, *args, **kwargs):
+        def _callback(args, kwargs):
+            return lambda res: func(res, *args, **kwargs)
+
+        self._preprocess_funcs.append(_callback(args, kwargs))
         return self
 
-    def process(self, func):
-        self._process_funcs.append(func)
+    def process(self, func, *args, **kwargs):
+        def _callback(args, kwargs):
+            return lambda df: func(df, *args, **kwargs)
+
+        self._process_funcs.append(_callback(args, kwargs))
         return self
 
 
